@@ -18,10 +18,10 @@
 						<div id="kotaksugest"></div>
 				    </div>
 					<div class="col-xs-2 form-group">
-				        <label>Jabatan</label>
+				        <label>Golongan</label>
 				    </div>
 				    <div class="col-xs-4 form-group">
-				        <input class="form-control" type="text" name="jabatan" id="jabatan"/>
+				        <input class="form-control" type="text" name="golongan" id="golongan"/>
 				    </div>
 
 				    <div class="clearfix"></div>
@@ -32,14 +32,6 @@
 				    <div class="col-xs-4 form-group">
 				        <input class="form-control" type="text" name="nip" id="nip"/>
 				    </div>
-					<div class="col-xs-2 form-group">
-				        <label>Golongan</label>
-				    </div>
-				    <div class="col-xs-4 form-group">
-				        <input class="form-control" type="text" name="golongan" id="golongan"/>
-				    </div>
-				
-					<div class="clearfix"></div>
 					<div class="col-xs-2 form-group">
 				        <label>PAF/Dept/Prodi</label>
 				    </div>
@@ -70,21 +62,43 @@
 			 		<th>Hari/Tanggal</th>
 			 		<th>Uraian Pekerjaan yang Dilakukan</th>
 			 		<th>Presensi</th>
-			 		<th>Lebih Jam</th>
-					<th>Lama Lembur <br>(jam)</th>
-					<th></th>
+			 		<th>Jam Lembur</th>
+					<th>Honor Lembur</th>
+					<th>Keterangan</th>
+					<th colspan="2"></th>
 			 	</tr>
 				</thead>
 				<tbody>
 				</tbody>
 				<tfoot>
 					<tr>
-			 		<td></td><td></td><td></td><td id="total"></td><td id="total_jam"></td><td></td>
+						<td colspan="2">
+							<div class="div-table">
+								<div class="div-table-row">
+									<div class="div-table-col">Total Jam Lembur Hari Kerja</div>
+									<div class="div-table-col">=</div>
+									<div class="div-table-col" id="total_jam_hari_kerja"></div>
+								</div>
+								<div class="div-table-row">
+									<div class="div-table-col">Total Jam Lembur Hari Libur</div>
+									<div class="div-table-col">=</div>
+									<div class="div-table-col" id="total_jam_hari_libur"></div>
+								</div>
+							</div>
+						</td>
+						<td></td>
+						<td id="total"></td>
+						<td id="total_honor"></td>
+						<td colspan="2"></td>
 			 	</tr>
 				</tfoot>
 			</table>
-			<div class="row">
-				<button type="button" class="btn btn-success" data-toggle="modal" data-target="#inputModal" data-whatever="@mdo"><b>+</b></button>
+			<div class="container">
+				<div class="row">
+					<div class="col-xs-2 pull-right">
+						<button type="button" class="btn btn-success" data-toggle="modal" data-target="#inputModal" id="tambah"><b>tambah</b></button>
+					</div>
+				</div>				
 			</div>
 		</div>
 	</div>	
@@ -104,11 +118,16 @@
 		</div>
 	</div>
 </div>
-<div class="row">
-	<div class="col-xs-12">
-		<button type="button" class="btn btn-primary" id="simpan"> simpan </button>
-	</div>
+
+<div class="container">
+	<div class="row">
+		<div class="col-xs-2 pull-right">
+			<button type="button" class="btn btn-primary" id="simpan"> simpan </button>
+		</div>
+	</div>	
 </div>
+
+
 <!-- modal tambah data -->
 <div class="modal fade" id="inputModal" tabindex="-1" role="dialog" aria-labelledby="inputModalLabel">
 	<div class="modal-dialog modal-lg" role="document">
@@ -179,7 +198,7 @@
 						<input name="edit_waktu" id="edit_waktu" type="text"  class="form-control"value="" placeholder="Waktu"/>
 					</div>
 					<div class="col-xs-3 form-group">
-						<label for="edit_waktu_lembur">Lebih Jam</label>
+						<label for="edit_waktu_lembur">Jam Lembur</label>
 						<input name="edit_waktu_lembur" id="edit_waktu_lembur" type="text" class="form-control"value="" placeholder="Waktu Lembur"/>
 					</div>
 					<div class="clearfix"></div>	
@@ -199,7 +218,7 @@
 		</div>
 	</div>
 </div>
-<div id="test"><div>
+<div class="container" id="test"></div>
 <style type="text/css">
 .panel-heading {
 	background: gray !important;
@@ -212,6 +231,24 @@ table tr th {
 form#input-lembur>.form-group>label {
 	font-size: 13px;
 	text-align:center;
+}
+.div-table {
+  display: table;         
+  width: auto;         
+  background-color: #eee;         
+  border: 1px solid #fa0;         
+  border-spacing: 5px; /* cellspacing:poor IE support for  this */
+}
+.div-table-row {
+  display: table-row;
+  width: auto;
+  clear: both;
+}
+.div-table-col {
+  float: left; /* fix for  buggy browsers */
+  display: table-column;         
+  /*width: 200px;     */    
+  background-color: #eee;  
 }
 </style>
 
@@ -275,7 +312,7 @@ $(document).ready(function(){
 		var tds = $(this).find('td')
 		$("#nip").val(tds.eq(0).text())
 		$("#nama").val(tds.eq(1).text())
-		$("#jabatan").val(tds.eq(2).text())
+		$("#golongan").val(tds.eq(2).text())
 		$("#unit_kerja").val(tds.eq(3).text())
 	})
 	
@@ -327,32 +364,35 @@ $(document).ready(function(){
 		var uraian   	 = $("#uraian").val()
 		var waktu 	  	 = $("#waktu").val()
 		var waktu_lembur = $("#waktu_lembur").val()
+		var golongan 	 = $("#golongan").val()
 		var i=0
 		
 		//hitung lama lembur (jam)
 		var jml_menit = getMenit(waktu_lembur)
 		var jml_jam = getMenit(waktu_lembur) / 60
-		
-		//tambah record
-		$("table#pelaksanaan-lembur tbody").append("<tr><td class='tgl-lembur'>"+tgl_lembur+"</td><td class='uraian'>"+uraian+"</td><td class='waktu'>"+waktu+"</td><td class='waktu-lembur' id='waktu"+i+"' >"+waktu_lembur+"</td><td class='jml-jam'>"+jml_jam+"</td><td class='remove' style='color:red'><i class='fa fa-remove' ></i></td><td class='edit' style='color:green'><i class='fa fa-edit' ></i></td></tr>")
-		
-		//hitung total lembur
-		var total_menit = 0
-		$(".waktu-lembur").each(function(){
-			var time = $(this).text();
-			total_menit = total_menit + getMenit(time)
-			 i++
-		})
-		
-		var jamLembur = Math.floor(total_menit / 60)
-    	var menitLembur = parseInt((total_menit % (60 )) % 60);
-    	var total_jam = total_menit / 60
-    
-		$("table#pelaksanaan-lembur tfoot tr td#total").text(jamLembur+":"+menitLembur)
-		//$("table#pelaksanaan-lembur tfoot tr td#total_menit").text(total_menit)
-		//$("table#pelaksanaan-lembur tfoot tr td#total_jam").text(total_jam)
+		var honor_lembur = jml_jam * 0
+
+		$.ajax({
+            type: "POST",
+            url: "views/form_lembur_get_hs.php",
+            dataType: "json",
+            data: {
+            	tgl_lembur:tgl_lembur,
+            	golongan:golongan,
+				jml_menit:jml_menit
+			},            
+            success: function(data) {
+                console.log(data)
+				//tambah record
+				$("table#pelaksanaan-lembur tbody").append("<tr><td class='tgl-lembur'>"+tgl_lembur+"</td><td class='uraian'>"+uraian+"</td><td class='waktu'>"+waktu+"</td><td class='waktu-lembur' id='waktu"+i+"' >"+waktu_lembur+"</td><td class='honor-lembur'>"+data.text+"</td><td class='keterangan'></td><td class='remove' style='color:red'><i class='fa fa-remove' ></i></td><td class='edit' style='color:green'><i class='fa fa-edit' ></i></td></tr>")
+            }           
+        })
 		
 		$(".modal").modal('hide')
+	})
+	
+	$('.modal').on('hidden.bs.modal', function () {
+		hitungTotalLembur()
 	})
 	
 	$(document).on("click", "#edit_ok", function(){
@@ -362,48 +402,38 @@ $(document).ready(function(){
 		var uraian   	 = $("#edit_uraian").val()
 		var waktu 	  	 = $("#edit_waktu").val()
 		var waktu_lembur = $("#edit_waktu_lembur").val()
+		var golongan 	 = $("#golongan").val()
 		var i=0
 		
 		//hitung lama lembur (jam)
 		var jml_menit = getMenit(waktu_lembur)
 		var jml_jam = getMenit(waktu_lembur) / 60
 		
-		//edit record
-		$("table#pelaksanaan-lembur tbody").find("tr").eq(indeks).find("td").eq(0).text(tgl_lembur)
-		$("table#pelaksanaan-lembur tbody").find("tr").eq(indeks).find("td").eq(1).text(uraian)
-		$("table#pelaksanaan-lembur tbody").find("tr").eq(indeks).find("td").eq(2).text(waktu)
-		$("table#pelaksanaan-lembur tbody").find("tr").eq(indeks).find("td").eq(3).text(waktu_lembur)
-		$("table#pelaksanaan-lembur tbody").find("tr").eq(indeks).find("td").eq(4).text(jml_jam)
-		
-		//hitung total lembur
-		var total_menit = 0
-		$(".waktu-lembur").each(function(){
-			var time = $(this).text();
-			total_menit = total_menit + getMenit(time)
-			 i++
-		})
-		
-		var jamLembur = Math.floor(total_menit / 60)
-    	var menitLembur = parseInt((total_menit % (60 )) % 60);
-    	var total_jam = total_menit / 60
-    
-		$("table#pelaksanaan-lembur tfoot tr td#total").text(jamLembur+":"+menitLembur)
-		//$("table#pelaksanaan-lembur tfoot tr td#total_menit").text(total_menit)
-		//$("table#pelaksanaan-lembur tfoot tr td#total_jam").text(total_jam)
+		$.ajax({
+            type: "POST",
+            url: "views/form_lembur_get_hs.php",
+            data: {
+            	tgl_lembur:tgl_lembur,
+            	golongan:golongan,
+				jml_menit:jml_menit
+			},            
+            success: function(data) {
+                console.log(data)
+				//edit record
+				$("table#pelaksanaan-lembur tbody").find("tr").eq(indeks).find("td").eq(0).text(tgl_lembur)
+				$("table#pelaksanaan-lembur tbody").find("tr").eq(indeks).find("td").eq(1).text(uraian)
+				$("table#pelaksanaan-lembur tbody").find("tr").eq(indeks).find("td").eq(2).text(waktu)
+				$("table#pelaksanaan-lembur tbody").find("tr").eq(indeks).find("td").eq(3).text(waktu_lembur)
+				$("table#pelaksanaan-lembur tbody").find("tr").eq(indeks).find("td").eq(4).text(data.text)
+            }           
+        })
 		
 		$(".modal").modal('hide')
 	})
 	
 	$(document).on("click", ".remove", function(){
 		$(this).closest('tr').remove()
-		var total_menit = 0
-		$(".waktu-lembur").each(function(){
-			var time = $(this).text();
-			total_menit = total_menit + getMenit(time)
-		})
-		var jamLembur = Math.floor(total_menit / 60)
-		var menitLembur = parseInt((total_menit % (60 )) % 60);
-		$("table#pelaksanaan-lembur tfoot tr td#total").text(jamLembur+":"+menitLembur)
+		hitungTotalLembur()
 	})
 	
 	$(document).on("click", ".edit", function(){
@@ -511,18 +541,59 @@ $(document).ready(function(){
     });*/
 })
 
-
-
 function hitungTotalLembur()
 {
+	//hitung total lembur
+	var total_menit = 0
+	var total_menit_hari_kerja = 0
+	var total_menit_hari_libur = 0
+	var total_honor = 0
+	var j = 0
 	$(".waktu-lembur").each(function(){
-			var time = $(this).text();
-			total_menit = total_menit + getMenit(time)
-			// i++
+		
+		var tgl = $(this).closest('tr').children('td.tgl-lembur').text();
+		var nama_hari = tgl.split(",")[0]
+		
+		if(nama_hari=="Sabtu" || nama_hari=="Minggu"){
+			total_menit_hari_libur += getMenit($(this).text())
+		} else {
+			total_menit_hari_kerja += getMenit($(this).text())
+		}
+		
+		var honor = $(this).closest('tr').children('td.honor-lembur').text();
+		honor = honor.replace(",","")
+		total_honor += parseInt(honor)
+		$(".totalSum").text('$' + parseFloat(total, 10).toFixed(2).replace(/(\d)(?=(\d{3})+\.)/g, "$1,").toString())
 	})
-	var jamLembur = Math.floor(total_menit / 60)
-	var menitLembur = parseInt((total_menit % (60 )) % 60);
-	return $("table#pelaksanaan-lembur tfoot tr td#total").text(jamLembur+":"+menitLembur)
+
+	var jam_lembur_hari_kerja = Math.floor(total_menit_hari_kerja / 60)
+	var menit_lembur_hari_kerja = parseInt((total_menit_hari_kerja % (60 )) % 60);
+	var total_jam_hari_kerja = total_menit_hari_kerja / 60
+
+	var jam_lembur_hari_libur = Math.floor(total_menit_hari_libur / 60)
+	var menit_lembur_hari_libur = parseInt((total_menit_hari_libur % (60 )) % 60);
+	var total_jam_hari_libur = total_menit_hari_libur / 60
+
+	$("#total_jam_hari_kerja").text(jam_lembur_hari_kerja+":"+menit_lembur_hari_kerja)
+	$("#total_jam_hari_libur").text(jam_lembur_hari_libur+":"+menit_lembur_hari_libur)
+	
+	//$("#total_honor").text('' + parseFloat(total_honor, 10).toFixed(2).replace(/(\d)(?=(\d{3})+\.)/g, "$1,").toString())
+	$("#total_honor").text( total_honor.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",") )
+	
+	total_menit = total_menit_hari_libur + total_menit_hari_kerja
+	/*if(total_menit>=3000){
+		alert("Pengajuan lembur sudah melampaui 50 jam")
+		$("#tambah").prop('disabled', true)
+	} else {
+		$("#tambah").prop('disabled', false)
+	}*/
+
+	if(total_menit_hari_libur>=1500 || total_menit_hari_kerja >=1500){
+		alert("Pengajuan lembur sudah lebih dari 25 jam")
+		//$("#tambah").prop('disabled', true)
+	} else {
+		$("#tambah").prop('disabled', false)
+	}
 }
 
 function getMenit(timeStr)
@@ -534,6 +605,18 @@ function getMenit(timeStr)
     var totalMenit = jam * 60 + menit;    
     return totalMenit;
 };
+
+function namaHari(v_tgl)
+{
+    var array_hari = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
+    var array_tgl = v_tgl.split('/');
+    var tgl = v_tgl;
+    var tanggal = new Date(tgl);
+    var d = array_tgl[1];
+    var kd_hari = tanggal.getDay();
+    var hari = array_hari[kd_hari];
+    return hari;
+}
 
 function totalLembur()
 {
