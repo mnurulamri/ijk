@@ -2,9 +2,6 @@
 #include("../models/conn2.php"); -> untuk knyetak msword pake ini nggak jalan ????
 #include("https://remun.ppaa.fisip.ui/ijk/libraries/unit_Kerja.php");
 
-$mysqli = mysql_connect($server,$user,$pass) or die('error connecting mysql');
-mysql_select_db($db,$mysqli) or die('Database tidak ditemukan');
-
 if(!session_id()) session_start();
 $nip = $_SESSION['user_nip'];
 
