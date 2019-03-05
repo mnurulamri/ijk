@@ -22,7 +22,7 @@ while ($row = mysql_fetch_object($result)) {
 
 //ambil data karwayan
 $kata = $_POST['q'];
-$sql = "SELECT DISTINCT nip, nama, 'Staf' as jabatan, unit_kerja
+$sql = "SELECT DISTINCT nip, nama, Gol_Gapok as golongan, unit_kerja
 		FROM ijk
 		WHERE SUBSTR(periode, 1, 2) = '$bulan' AND SUBSTR(periode, 7, 4) = '$tahun' AND nama like '%$kata%' ";
 $query = mysql_query($sql) or die(mysql_error());
@@ -32,7 +32,7 @@ echo '
 	<tr>
 		<th>NPM/NIP/NUP</th>
 		<th>Nama</th>
-		<th>Jabatan</th>
+		<th>Golongan</th>
 		<th>PAF/Dept/Prodi</th>
 	</tr>';
 	while($k = mysql_fetch_array($query)){
