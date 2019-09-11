@@ -2,8 +2,21 @@
 #include("../models/conn2.php"); -> untuk knyetak msword pake ini nggak jalan ????
 #include("https://remun.ppaa.fisip.ui/ijk/libraries/unit_Kerja.php");
 
+$server = "localhost";
+$user = "remun";
+$pass = "usbw";
+$db = "remun";
+
+$mysqli = mysql_connect($server,$user,$pass) or die('error connecting mysql');
+mysql_select_db($db,$mysqli) or die('Database tidak ditemukan');
+
 if(!session_id()) session_start();
-$nip = $_SESSION['user_nip'];
+
+if(!empty($_POST['nip'])){
+	$nip = $_POST['nip'];
+} else {
+	$nip = $_SESSION['user_nip'];
+}
 
 //ambil tahun terakhir
 $sql = "SELECT DISTINCT(MAX(SUBSTR(periode, 7, 4))) as tahun FROM ijk"; 
@@ -56,7 +69,7 @@ $query = mysql_query($sql) or die(mysql_error());
 $num_rows = mysql_num_rows($result);
 if($num_rows > 0){
 	while ($row = mysql_fetch_assoc($query)){
-		$deskripsi = $row[deskripsi];
+		$deskripsi = $row['deskripsi'];
 	}
 }
 

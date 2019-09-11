@@ -182,18 +182,16 @@ function footer_table($total_jam_hari_kerja, $total_jam_hari_libur, $total_jam_h
 }
 */
 ?>
-
-<div style="text-align:center; font-weight:bold;padding:10px">
-	- Periode <?=$_POST['bulan']?> <?=$tahun?> -
-</div>
-<div>
-    <input class="form-control" type="hidden" name="tahun" id="tahun" value="<?=$tahun?>"/>
-	<input class="form-control" type="hidden" name="bulan" id="bulan" value="<?=$bulan?>"/>
-</div>
-
+				<div style="text-align:center; font-weight:bold;padding:10px">
+					- Periode <?=$_POST['bulan']?> <?=$tahun?> -
+			    </div>
+				<div>
+			        <input class="form-control" type="hidden" name="tahun" id="tahun" value="<?=$tahun?>"/>
+					<input class="form-control" type="hidden" name="bulan" id="bulan" value="<?=$bulan?>"/>
+			    </div>
 <div class="panel panel-default">
 	<!-- data pemohon -->
-	<div class="panel-heading">
+	<div class="panel-heading" style="text-align:center">
 		<h3 class="panel-title">DATA PEMOHON</h3>
 	</div>
 	<div class="panel-body">
@@ -256,7 +254,7 @@ $(document).ready(function(){
 	var bulan = $("#bulan").val()
 	$.ajax({
         type: "POST",
-        url: "views/form_lembur_admin_approval_refresh.php",
+        url: "views/form_lembur_unit_approval_refresh.php",
         data: {nip:nip, tahun:tahun, bulan:bulan},
         success: function(res) {
 			$("#table-data").html(res)
@@ -264,3 +262,9 @@ $(document).ready(function(){
     })
 })
 </script>
+
+<style>
+table#pelaksanaan-lembur thead tr th {
+	background-color:lightgray !important;
+}
+</style>

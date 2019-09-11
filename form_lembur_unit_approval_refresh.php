@@ -1,18 +1,30 @@
 <?php
 if(!session_id()) session_start();
+#ini_set('display_errors', 1);
 date_default_timezone_set('Asia/Jakarta');
 include_once("../models/conn.php");
+include("fungsi.php");
+
 $nip = $_POST['nip'];
 $tahun = $_POST['tahun'];
 $bulan = bulan($_POST['bulan']);
-function bulan($nama_bulan){
-	$array_bulan = array("Januari"=>"01", "Februari"=>"02", "Maret"=>"03",
-					   "April"=>"04", "Mei"=>"05", "Juni"=>"06",
-					   "Juli"=>"07", "Agustus"=>"08", "September"=>"09",
-					   "Oktober"=>"10", "November"=>"11", "Desember"=>"12");
-	return $array_bulan[$nama_bulan];
-}
 
+$array_bulan = array('Januari','Februari','Maret','April','Mei', 'Juni','Juli','Agustus','September','Oktober','November','Desember');
+$array_bulan1 = array('Januari'=>'01','Februari'=>'02','Maret'=>'03','April'=>'04','Mei'=>'05', 'Juni'=>'06','Juli'=>'07','Agustus'=>'08','September'=>'09','Oktober'=>'10','November'=>'11','Desember'=>'12');
+$array_bulan2 = array('01'=>'Januari','02'=>'Februari','03'=>'Maret','04'=>'April','05'=>'Mei', '06'=>'Juni','07'=>'Juli','08'=>'Agustus','09'=>'September','10'=>'Oktober','11'=>'November','12'=>'Desember');
+$m = date('n')-1;
+$day = date('d');
+$tahun = date('Y');
+
+if ($day <= 11){
+	$bulan_sekarang = $array_bulan[ $m-1 ];
+} else {
+	$bulan_sekarang = $array_bulan[ $m ];
+}
+$periode_berjalan = $tahun.$array_bulan1[$bulan_sekarang];
+$periode = $tahun.$bulan;
+
+/*
 $sql ="SELECT * FROM lembur_pemohon WHERE nip = '$nip' AND flag_transaksi = 0";
 $result = mysql_query($sql) or die(mysql_error());
 while($row = mysql_fetch_assoc($result)){
@@ -21,10 +33,13 @@ while($row = mysql_fetch_assoc($result)){
 	$data_pemohon['nip'] = $row['nip'];
 	$data_pemohon['unit_kerja'] = $row['unit_kerja'];
 }
-/*
-$sql ="SELECT id, tgl_lembur, presensi, uraian, waktu_lembur, status, keterangan, flag_libur, honor_lembur
+*/
+$sql ="SELECT id, tgl_lembur, presensi, uraian, waktu_lembur, waktu_lembur_disetujui, 
+		status, keterangan, flag_libur, honor_lembur, TIME_TO_SEC(waktu_lembur_disetujui)/60 as jumlah_menit_disetujui,
+		(TIME_TO_SEC(waktu_lembur_disetujui)/3600)*harga_satuan as honor_lembur_disetujui, flag_ajukan,
+		CONCAT(tahun,bulan) as periode
 		FROM lembur_detail
-		WHERE nip = '$nip' AND flag_transaksi = 0
+		WHERE nip = '$nip' AND flag_transaksi = 0 AND tahun = $tahun AND bulan = '$bulan'
 		ORDER BY tgl_lembur";
 $result = mysql_query($sql) or die(mysql_error());
 while($row = mysql_fetch_assoc($result)){
@@ -46,26 +61,62 @@ function printTabel($data_lembur)
 		$array_waktu = explode(' - ', $presensi);
 		$selesai_lembur = $array_waktu[1];
 		$waktu_lembur = new DateTime( $v['waktu_lembur'] );
+		$waktu_lembur_disetujui = new DateTime( $v['waktu_lembur_disetujui'] );
 		$array_selesai_lembur = explode(':', $array_waktu[1]);
 		$menit_selesai = $array_selesai_lembur[0] * 60 + $array_selesai_lembur[1];
 		$array_lembur = explode(':', $v['waktu_lembur']);
 		$menit_lembur = $array_lembur[0] * 60 + $array_lembur[1];
 		$mulai_lembur = date('H:i', mktime(0, $menit_selesai - $menit_lembur ));
 		
-		if($v['status'] == 0){
-			$status = 'Belum Disetujui';
+		//bila mengajukan nonaktifkan fungsi edit
+		if($v['status'] == 0 AND $v['flag_ajukan'] == 0){
+			$status = 'Belum Diajukan';
+			$honor_lembur = 0;
+			$remove = '';
+			$edit = '';
+			$checkbox = '';
+			$flag = 'true';
+			$rollback = '';
+			$waktu_lembur_disetujui = '00:00';
+		} 
+		//bila sudah mengajukan aktifkan fungsi edit
+		else if($v['status'] == 0 AND $v['flag_ajukan'] == 1){
+			$status = 'Menunggu Persetujuan Kepala Unit';
 			$honor_lembur = 0;
 			$remove = '<i class="fa fa-trash" ></i>';
 			$edit = '<i class="fa fa-edit" ></i>';
 			$checkbox = '<input type="checkbox" class="approval-check" value="'.$v['id'].'"/>';
-		} else {
-			$status = 'Disetujui';
-			$honor_lembur = $v['honor_lembur'];
+			$flag = 'true';
+			$rollback = '';
+			$waktu_lembur_disetujui = '00:00';
+		} else if ($v['status'] == 1){
+			$status = 'Menunggu Persetujuan Manajer SDM';
+			$honor_lembur = $v['honor_lembur_disetujui'];
 			$remove = '';
 			$edit = '';
 			$checkbox = '';
+			$flag = 'false';
+			$rollback = '<input type="checkbox" class="rollback-check" value="'.$v['id'].'"/>';
+			$waktu_lembur_disetujui = $waktu_lembur_disetujui->format("H:i");
+		} else if ($v['status'] == 2){
+			$status = 'Disetujui';
+			$honor_lembur = $v['honor_lembur_disetujui'];
+			$remove = '';
+			$edit = '';
+			$checkbox = '';
+			$flag = 'false';
+			$rollback = '';
+			$waktu_lembur_disetujui = $waktu_lembur_disetujui->format("H:i");
 		}
 		
+		#jika yg dipilih adalah periode yg lama maka nonaktifkan fungsi approval dan fungsi edit
+		if($v['periode'] < periode_berjalan()){ 
+			$remove = '';
+			$edit = '';
+			$checkbox = '';
+			$rollback = '';
+		}
+
 		echo '
 		<tr id="'.$v['id'].'">
 			<td width="160px">'.tanggal($v['tgl_lembur']).'</td>
@@ -73,11 +124,12 @@ function printTabel($data_lembur)
 			<td>'.$mulai_lembur.'</td>
 			<td>'.$selesai_lembur.'</td>
 			<td>'.$waktu_lembur->format("H:i").'</td>
+			<td class="waktu_lembur_disetujui" contenteditable="true">'.$waktu_lembur_disetujui.'</td>
 			<td>'.$status.'</td>
-			<td class="keterangan">'.$v['keterangan'].'</td>
+			<td class="keterangan" contenteditable="true">'.$v['keterangan'].'</td>
 			<td class="honor">'.number_format($honor_lembur).'</td>
 			<td style="color:red">'.$checkbox.'</td>
-			<!--<td class="edit" style="color:green">'.$edit.'</td>-->
+			<td>'.$rollback.'</td>
 		</tr>';
 		$test += $menit_lembur;
 		# Hitung Total Jam Lembur
@@ -138,129 +190,76 @@ function header_table(){
 	<table class="table table-bordered" id="pelaksanaan-lembur">
 				<thead>
 			 	<tr>
-			 		<th>Hari/Tanggal</th>
+			 		<th style="background-color:gray">Hari/Tanggal</th>
 			 		<th>Uraian Pekerjaan yang Dilakukan</th>
 			 		<th>Mulai Lembur</th>
 					<th>Selesai Lembur</th>
 			 		<th>Lama Lembur</th>
+					<th>Lama Lembur Disetujui</th>
 					<th>Status</th>
 					<th>Keterangan</th>
 					<th>Honor</th>
-					<th>Approve</th>
+					<th><input type="checkbox" name="approval-check-all" class="approval-check-all">Disetujui</th>
+					<th><input type="checkbox" name="rollback-check-all" class="rollback-check-all">Ditolak</th>
 			 	</tr>
 				</thead>
 				<tbody>';
 }
 
 function footer_table($total_jam_hari_kerja, $total_jam_hari_libur, $total_jam_hari_kerja_disetujui, $total_jam_hari_libur_disetujui, $total_honor){
-	
+	//kotak isian biar sepadem
+	$string = '&nbsp'; $spasi = '';
+	for($i=0; $i<29; $i++){
+		$spasi .= $string; 
+	}
+	if($total_jam_hari_kerja == ''){
+		$total_jam_hari_kerja = $spasi;
+	}
+	if($total_jam_hari_libur == ''){
+		$total_jam_hari_libur = $spasi;
+	}
 	echo '
 				</tbody>
 				<tfoot>
 					<tr>
-					<td colspan="8" style="border-left:1px solid #fff; border-bottom:1px solid #fff;"></td>
+					<td colspan="11" style="border-left:1px solid #fff; border-right:1px solid #fff; border-bottom:1px solid #fff;"></td>
 					</tr>
 					<tr>
-						<td colspan="7" style="border-left:1px solid #fff; border-bottom:1px solid #fff;">
+						<td colspan="8" style="border-left:1px solid #fff; border-bottom:1px solid #fff; border-right:1px solid #fff;">
 							<span class="total-label">Total Jam Lembur Hari Kerja </span>
 							<span class="total-value">'.$total_jam_hari_kerja.'</span>
-							<span class="total-label">Disetujui </span>
-							<span class="total-value">'.$total_jam_hari_kerja_disetujui.'</span>
+							<!--<span class="total-label">Disetujui </span>
+							<span class="total-value">'.$total_jam_hari_kerja_disetujui.'</span>-->
 						</td>
+						<td rowspan="2" style="border-left:1px solid #fff; border-bottom:1px solid #fff;"></td>
 						<td rowspan="2" style="vertical-align:middle">'.number_format($total_honor).'</td>
 					</tr>
 					<tr>
-						<td colspan="7" style="border-left:1px solid #fff; border-bottom:1px solid #fff;">
+						<td colspan="8" style="border-left:1px solid #fff; border-bottom:1px solid #fff;">
 							<span class="total-label">Total Jam Lembur Hari Libur </span>
 							<span class="total-value">'.$total_jam_hari_libur.'</span>
-							<span class="total-label">Disetujui </span>
-							<span class="total-value">'.$total_jam_hari_libur_disetujui.'</span>
+							<!--<span class="total-label">Disetujui </span>
+							<span class="total-value">'.$total_jam_hari_libur_disetujui.'</span>-->
 						</td>
 					</tr>
 				</tfoot>
 			</table>';
 }
-*/
-?>
+//echo '<pre style="background-color:#eee;">';
 
-<div style="text-align:center; font-weight:bold;padding:10px">
-	- Periode <?=$_POST['bulan']?> <?=$tahun?> -
-</div>
-<div>
-    <input class="form-control" type="hidden" name="tahun" id="tahun" value="<?=$tahun?>"/>
-	<input class="form-control" type="hidden" name="bulan" id="bulan" value="<?=$bulan?>"/>
-</div>
-
-<div class="panel panel-default">
-	<!-- data pemohon -->
-	<div class="panel-heading">
-		<h3 class="panel-title">DATA PEMOHON</h3>
-	</div>
-	<div class="panel-body">
-		<div class="row">
-			<form>
-			    <div class="col-xs-2 form-group">
-			        <label>Nama</label>
-			    </div>
-			    <div class="col-xs-4 form-group">
-			        <!--<input class="form-control" type="text" name="nama" id="nama" onkeyup="lihat(this.value)"/>-->
-			        <input class="form-control" type="text" name="nama" id="nama" value="<?=$data_pemohon['nama']?>"/>							
-					<div id="kotaksugest"></div>
-			    </div>
-				<div class="col-xs-2 form-group">
-			        <label>Golongan</label>
-			    </div>
-			    <div class="col-xs-4 form-group">
-			        <input class="form-control" type="text" name="golongan" id="golongan" value="<?=$data_pemohon['golongan']?>"/>
-			    </div>
-
-			    <div class="clearfix"></div>
-
-			    <div class="col-xs-2 form-group">
-			        <label>NPM/NIP/NUP</label>
-			    </div>
-			    <div class="col-xs-4 form-group">
-			        <input class="form-control" type="text" name="nip" id="nip" value="<?=$data_pemohon['nip']?>"/>
-			    </div>
-				<div class="col-xs-2 form-group">
-			        <label>PAF/Dept/Prodi</label>
-			    </div>
-			    <div class="col-xs-4 form-group">
-			        <input class="form-control" type="text" name="unit_kerja" id="unit_kerja" value="<?=$data_pemohon['unit_kerja']?>"/>
-			    </div>
-			    <div class="clearfix"></div>
-			    <div class="col-xs-4 form-group">
-			    </div>				
-			</form>
-		</div>	
-	</div>
-</div>
-
-<!-- Data Penugasan -->
-<div class="panel panel-default">
-	<div class="panel-heading" style="text-align:center">
-		<h3 class="panel-title">PERSETUJUAN PELAKSANAAN LEMBUR</h3>
-	</div>
-	<div class="panel-body">
+if ($periode >= $periode_berjalan) {
+	echo '
+	<ul class="col-xs-12 col-md-12 pull-left text-info" style="font-size:10px;" id="info-persetujuan">
+		<!--<li>Bila status Belum Disetujui maka persetujuan lembur belum dapat dilakukan </li>-->
+		<!--<li>Tekan tombol <input type="checkbox"> (checkbox) pada kolom Disetujui untuk memilih item lembur yang akan disetujui.</li>-->
+		<li>Silahkan tekan tombol <font class="label label-primary">Ajukan</font> untuk menyetujui dan meningkatkan status menjadi "Menunggu Persetujuan Manajer SDM"</li>
+		<!--<li>Setelah memilih item lembur, silahkan tekan tombol <font class="label label-primary">approve</font> untuk memberikan persetujuan. Selanjutnya secara otomatis status akan berubah menjadi "Menunggu Persetujuan Manajer SDM"</li>-->
+		<!--<li>Untuk pembatalan item lembur yang sudah disetujui, tekan tombol <input type="checkbox"> (checkbox) pada kolom rollback, kemudian tekan tombol <font class="label label-warning">rollback</font></li>-->
+	</ul>';
+}
 		
-		<div id="table-data" style="overflow:auto"></div>
-	</div>
-</div>
-
-<!--<pre id="test"></pre>-->
-
-<script type="text/javascript">
-$(document).ready(function(){
-	var nip = $("#nip").val()
-	var tahun = $("#tahun").val()
-	var bulan = $("#bulan").val()
-	$.ajax({
-        type: "POST",
-        url: "views/form_lembur_admin_approval_refresh.php",
-        data: {nip:nip, tahun:tahun, bulan:bulan},
-        success: function(res) {
-			$("#table-data").html(res)
-        }    
-    })
-})
-</script>
+#cetak data
+header_table();
+printTabel($data_lembur);
+//echo '</pre>';
+?>

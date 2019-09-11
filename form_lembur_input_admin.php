@@ -1,6 +1,5 @@
 <?php
 include('session_end.php');
-
 include_once('assets/css/blink_me.php');
 
 $array_bulan = array('Januari','Februari','Maret','April','Mei', 'Juni','Juli','Agustus','September','Oktober','November','Desember');
@@ -89,14 +88,14 @@ for($i=$tahun_1; $i <= $tahun_2; $i++ ){
 				    </div>
 				    <div class="col-xs-4 form-group">
 				        <!--<input class="form-control" type="text" name="nama" id="nama" onkeyup="lihat(this.value)"/>-->
-				        <input class="form-control" type="text" name="nama" id="nama" value="<?=$data_pemohon['nama']?>"/>							
+				        <input class="form-control" type="text" name="nama" id="nama" placeholder="type keywords to search"/>							
 						<div id="kotaksugest"></div>
 				    </div>
 					<div class="col-xs-2 form-group">
 				        <label>Golongan</label>
 				    </div>
 				    <div class="col-xs-4 form-group">
-				        <input class="form-control" type="text" name="golongan" id="golongan" value="<?=$data_pemohon['golongan']?>"/>
+				        <input class="form-control" type="text" name="golongan" id="golongan"/>
 				    </div>
 
 				    <div class="clearfix"></div>
@@ -105,20 +104,20 @@ for($i=$tahun_1; $i <= $tahun_2; $i++ ){
 				        <label>NPM/NIP/NUP</label>
 				    </div>
 				    <div class="col-xs-4 form-group">
-				        <input class="form-control" type="text" name="nip" id="nip" value="<?=$data_pemohon['nip']?>"/>
+				        <input class="form-control" type="text" name="nip" id="nip"/>
 				    </div>
 					<div class="col-xs-2 form-group">
 				        <label>PAF/Dept/Prodi</label>
 				    </div>
 				    <div class="col-xs-4 form-group">
-				        <input class="form-control" type="text" name="unit_kerja" id="unit_kerja" value="<?=$data_pemohon['unit_kerja']?>"/>
+				        <input class="form-control" type="text" name="unit_kerja" id="unit_kerja"/>
 				    </div>
 				    <div class="clearfix"></div>
 				    <div class="col-xs-4 form-group">
 				    </div>
-				    <!--<div class="col-xs-2 form-group">
-				        <input type="reset" value="clear" id="clear"/>
-				    </div>-->					
+				    <div class="col-xs-2 form-group">
+				        <input type="reset" value="clear to search" id="clear-to-search" class="btn btn-info"/>
+				    </div>					
 				</form>
 
 			</div>	
@@ -252,6 +251,7 @@ $(document).ready(function()
 		var array = {'Januari':'01','Februari':'02','Maret':'03','April':'04','Mei':'05', 'Juni':'06','Juli':'07','Agustus':'08','September':'09','Oktober':'10','November':'11','Desember':'12'}
 		var periode = tahun+array[bulan];
 		var periode_berjalan = $("#periode_berjalan").val()
+		var nip = $("#nip").val()
 
 		if (periode<periode_berjalan) {
 			$('#flag-tambah').html('')
@@ -267,7 +267,7 @@ $(document).ready(function()
     	$.ajax({
         	type: 'POST',
         	url: 'views/form_lembur_get_data.php',
-        	data: {tahun:tahun, bulan:bulan, periode:periode, periode_berjalan:periode_berjalan},
+        	data: {nip:nip, tahun:tahun, bulan:bulan, periode:periode, periode_berjalan:periode_berjalan},
         	//data:'page='+page_num+'&keywords='+keywords+'&sortBy='+sortBy,
         	//beforeSend: function () {
             //	$('.loading-overlay').show();
@@ -564,6 +564,71 @@ $(document).ready(function()
 			    })
 	        }    
 	    })
+	})
+	
+	$(document).on("keyup", "#nama", function(){
+		var kata = $("#nama").val()
+		$.ajax({
+			type: "POST",             // Type of request to be send, called as method
+			url: "views/form_lembur_cari_nama.php", // Url to which the request is send			
+			data: {q:kata}, 	//  -> Data sent to server, a set of key/value pairs (i.e. form fields and values)
+			success: function(data)   // A function to be called if request succeeds
+			{
+				$("#kotaksugest").html(data);
+			}					
+		})
+	})
+
+	$(document).on("click", ".isi", function(){
+		var nip = $(this).attr("id")
+		var nama = $(this).children().first().text()
+		$("#kotaksugest").text("")
+		var tds = $(this).find('td')
+		$("#nip").val(tds.eq(0).text())
+		$("#nama").val(tds.eq(1).text())
+		$("#golongan").val(tds.eq(2).text())
+		$("#unit_kerja").val(tds.eq(3).text())
+		
+		var tahun = $("#tahun").val()
+		var bulan = $("#bulan").val()
+		
+		$.ajax({
+        	type: 'POST',
+        	url: 'views/form_lembur_get_data.php',
+        	data:{nip:nip, tahun:tahun, bulan:bulan},
+        	success: function (html) {	
+            	$('#table-data').html(html);
+        	}
+    	})
+    
+    	$.ajax({
+	        type: "POST",
+	        url: "views/form_lembur_data_pemohon_json.php",
+			data:{nip:nip},
+			dataType: "json",
+	        success: function(data) {
+				CKEDITOR.instances["deskripsi"].setData(data.deskripsi)
+	        }
+	    })
+	})
+	/*
+	$(document).on("click", "#clear", function(){
+		$("#nama").focus()
+		$("#kotaksugest").text("")
+	})*/
+	
+	$(document).on("click", "#clear-to-search", function(){
+		$("#nama").focus()
+		$("#kotaksugest").text("")
+	})
+	
+	$(document).on("change", "#nama", function(){
+		var nama = $("#nama").val()
+		if(nama==''){
+			var string = "type keywords to search"
+			$("#nama").val(string)
+		}
+		
 	})
 })
 </script>

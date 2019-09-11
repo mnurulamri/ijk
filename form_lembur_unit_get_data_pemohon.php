@@ -1,16 +1,15 @@
-<?php
 
+<?php
 //ini_set('display_errors', 1);
 include "pdo.class.php";
 //New PDO object
 $pdo = new Database();
-
+if(!session_id()) session_start();
 #set tahun dan bulan
 $tahun = $_POST['tahun'];
 $bulan = bulan($_POST['bulan']);
 #$tahun = 2019;
-#$bulan = '07';
-#$nip_pejabat = '196606161993031004'; //nanti ambil dari session
+#$bulan = '05';
 
 #ambil data unit kerja dan golongan terkini
 //ambil tahun terakhir
@@ -24,22 +23,54 @@ foreach($result as $row){
 //ambil bulan terakhir
 $sql="SELECT DISTINCT(MAX(SUBSTR(periode, 1, 2))) as bulan 
 FROM ijk 
-WHERE SUBSTR(periode, 1, 2) < 13 AND SUBSTR(periode, 7, 4) = '$tahun_ijk'"; 
+WHERE SUBSTR(periode, 1, 2) < 13 AND SUBSTR(periode, 7, 4) = '$tahun'"; 
 $stmt = $pdo->query($sql) ; //or die( $pdo->errorInfo()[2] );
 $result = $pdo->resultset();
 foreach($result as $row){
 	$bulan_ijk = $row['bulan'];
 }
 
-//ambil data pemohon
-$sql = "SELECT  DISTINCT a.nip, a.nama as nama_staf,unit_kerja, unit_kerja_real, gol_gapok, d.nama as nama_pejabat, jabatan, c.kodebidang as kode_bidang
-		FROM ijk a
-		LEFT OUTER JOIN lembur_detail b ON a.nip=b.nip
-		LEFT OUTER JOIN cek_unit_kerja c ON unit_kerja = unit_kerja_ijk
-		LEFT OUTER JOIN pejabat d ON c.kodebidang = d.kodebidang
-		WHERE tahun = $tahun AND bulan = '$bulan' AND SUBSTR(periode, 1, 2) = '$bulan_ijk' AND SUBSTR(periode, 7, 4) = '$tahun_ijk' AND b.status='1'
-		ORDER BY unit_kerja_real";
+//$nip_pejabat = $_SESSION['user_nip']; //$nip_pejabat = '196606161993031004'; //nanti ambil dari session
+if ($_SESSION['user_nip'] == '090613091') {
+	$nip_pejabat = '196606161993031004';
+} else if ($_SESSION['user_nip'] == '090613045'){
+	$nip_pejabat = '196510211993032001';
+} else {
+	$nip_pejabat = $_SESSION['user_nip']; 
+}
 
+if ($_SESSION['user_nip'] == '100220310210019891' or $_SESSION['user_nip'] == '090613045' or $_SESSION['user_nip'] == '090613091') {
+	//ambil data pemohon unit
+	$sql = "SELECT  DISTINCT a.nip, a.nama as nama, a.gol_gapok, unit_kerja_real, gol_gapok, d.nama as nama_pejabat, jabatan, c.kodebidang as kode_bidang
+			FROM ijk a
+			LEFT OUTER JOIN lembur_detail b ON a.nip=b.nip
+			LEFT OUTER JOIN cek_unit_kerja c ON unit_kerja = unit_kerja_ijk
+			LEFT OUTER JOIN pejabat d ON c.kodebidang = d.kodebidang
+			WHERE b.tahun=$tahun AND b.bulan='$bulan' AND SUBSTR(periode, 1, 2) = '$bulan_ijk' AND SUBSTR(periode, 7, 4) = '$tahun_ijk' AND flag_ajukan = 1
+			ORDER BY c.kodebidang";
+} else {
+	//ambil data pemohon unit kerja
+	$sql = "SELECT  DISTINCT a.nip, a.nama as nama, a.gol_gapok, unit_kerja_real, gol_gapok, d.nama as nama_pejabat, jabatan, c.kodebidang as kode_bidang
+			FROM ijk a
+			LEFT OUTER JOIN lembur_detail b ON a.nip=b.nip
+			LEFT OUTER JOIN cek_unit_kerja c ON unit_kerja = unit_kerja_ijk
+			LEFT OUTER JOIN pejabat d ON c.kodebidang = d.kodebidang
+			WHERE b.tahun=$tahun AND b.bulan='$bulan' AND SUBSTR(periode, 1, 2) = '$bulan_ijk' AND SUBSTR(periode, 7, 4) = '$tahun_ijk' AND d.nip = '$nip_pejabat' AND flag_ajukan = 1";
+}
+
+
+
+
+/*
+$sql = "SELECT * FROM lembur_pemohon 
+WHERE flag_transaksi = 0 AND TAHUN = '$tahun' AND bulan = '$bulan' AND nip in (
+	SELECT DISTINCT a.nip as nip
+	FROM ijk a 
+	LEFT JOIN TblPegawai b ON a.nip = b.nip
+	LEFT JOIN cek_unit_kerja c ON unit_kerja = unit_kerja_ijk
+	WHERE SUBSTR(periode, 1, 2) = '$bulan' AND SUBSTR(periode, 7, 4) = '$tahun' AND c.nip = '196606161993031004'
+)";
+*/
 $stmt = $pdo->query($sql) ; //or die( $pdo->errorInfo()[2] );
 $result = $pdo->resultset();
 $nama_kolom = $pdo->column();
@@ -58,7 +89,7 @@ $sql ="SELECT id, nip, tgl_lembur, presensi, uraian, waktu_lembur, waktu_lembur_
 			FROM ijk a 
 			LEFT JOIN TblPegawai b ON a.nip = b.nip
 			LEFT JOIN cek_unit_kerja c ON unit_kerja = unit_kerja_ijk
-			WHERE SUBSTR(periode, 1, 2) = '$bulan_ijk' AND SUBSTR(periode, 7, 4) = '$tahun_ijk' 
+			WHERE SUBSTR(periode, 1, 2) = '$bulan_ijk' AND SUBSTR(periode, 7, 4) = '$tahun_ijk' AND c.nip = '$nip_pejabat'
 		)
 		ORDER BY tgl_lembur";
 $stmt = $pdo->query($sql) ; //or die( $pdo->errorInfo()[2] );
@@ -67,31 +98,7 @@ foreach($result as $row){
 	$data_lembur[$row['nip']][] = $row;
 }
 
-/*include_once("../models/conn.php");
-
-#set tahun dan bulan
-$tahun = $_POST['tahun'];
-$bulan = bulan($_POST['bulan']);
-
-#ambil data pemohon
-$sql = "SELECT * FROM lembur_pemohon WHERE flag_transaksi = 0 AND TAHUN = '$tahun' AND bulan = '$bulan'";
-$result = mysql_query($sql) or die(mysql_error());
-while($row = mysql_fetch_assoc($result)){
-	$data_pemohon[$row['nip']] = $row;
-}
-
-#ambil data lembur
-$sql ="SELECT id, nip, tgl_lembur, presensi, uraian, waktu_lembur, waktu_lembur_disetujui, 
-		status, keterangan, flag_libur, honor_lembur, TIME_TO_SEC(waktu_lembur_disetujui)/60 as jumlah_menit_disetujui,
-		(TIME_TO_SEC(waktu_lembur_disetujui)/3600)*harga_satuan as honor_lembur_disetujui
-		FROM lembur_detail
-		WHERE flag_transaksi = 0 AND TAHUN = '$tahun' AND bulan = '$bulan'
-		ORDER BY tgl_lembur";
-$result = mysql_query($sql) or die(mysql_error());
-while($row = mysql_fetch_assoc($result)){
-	$data_lembur[$row['nip']][] = $row;
-}
-*/
+//print_r($data_lembur['091625022']); exit();
 #cetak data
 //echo '<pre>';
 header_table();
@@ -105,8 +112,8 @@ foreach ($data_pemohon as $key => $value){
 	<tr id="'.$value['id'].'" data-nip="'.$value['nip'].'">
 		<td>'.$no.'</td>
 		<td>'.$value['nip'].'</td>
-		<td>'.$value['nama_staf'].'</td>
-		<td>'.$value['unit_kerja_real'].'</td>
+		<td>'.$value['nama'].'</td>
+		<!--<td>'.$value['unit_kerja'].'</td>-->
 		<td>'.$value['gol_gapok'].'</td>
 		<td>'.$total['total_jam_hari_kerja'].'</td>
 		<td>'.$total['total_jam_hari_kerja_disetujui'].'</td>
@@ -238,7 +245,7 @@ function header_table(){
 			 		<th rowspan="2">No</th>
 			 		<th rowspan="2">NIP</th>
 			 		<th rowspan="2">Nama</th>
-					<th rowspan="2">Unit Kerja</th>
+					<!--<th rowspan="2">Unit Kerja</th>-->
 					<th rowspan="2">Gol</th>
 			 		<th colspan="2">Jam Lembur<br>Hari Kerja</th>
 					<th colspan="2">Jam Lembur<br>Hari Libur</th>
@@ -261,7 +268,7 @@ function footer_table($total_honor_lembur){
 				</tbody>
 				<tfoot>
 					<tr>
-						<th colspan="9" style="border-left:1px solid #fff;border-bottom:1px solid #fff;"></th>
+						<th colspan="8" style="border-left:1px solid #fff;border-bottom:1px solid #fff;"></th>
 						<th>'.number_format($total_honor_lembur).'</th>
 						<th style="border-righ:1px solid #fff;border-bottom:1px solid #fff;"></th>
 					</tr>
@@ -274,4 +281,4 @@ function test_data($data){
 	print_r($data);
 	echo '</pre>';
 }
-?>	
+?>
