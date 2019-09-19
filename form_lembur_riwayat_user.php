@@ -1,12 +1,15 @@
 <?php
 include('session_end.php');
 
+//include "views/form_lembur_periode_set_periode.php";
+
+/* script lama  */
 include_once('assets/css/blink_me.php');
 
 $array_bulan = array('Januari','Februari','Maret','April','Mei', 'Juni','Juli','Agustus','September','Oktober','November','Desember');
 $array_bulan1 = array('Januari'=>'01','Februari'=>'02','Maret'=>'03','April'=>'04','Mei'=>'05', 'Juni'=>'06','Juli'=>'07','Agustus'=>'08','September'=>'09','Oktober'=>'10','November'=>'11','Desember'=>'12');
 $array_bulan2 = array('01'=>'Januari','02'=>'Februari','03'=>'Maret','04'=>'April','05'=>'Mei', '06'=>'Juni','07'=>'Juli','08'=>'Agustus','09'=>'September','10'=>'Oktober','11'=>'November','12'=>'Desember');
-$m = date('n')-1;
+$m = date('n');
 $day = date('d');
 $tahun = date('Y');
 $tahun_1 = date('Y')-1;
@@ -17,6 +20,7 @@ if ($day <= 11){
 } else {
 	$bulan = $array_bulan[ $m ];
 }
+
 
 $opt_bulan = '';
 foreach($array_bulan as $k => $v){
@@ -29,8 +33,13 @@ for($i=$tahun_1; $i <= $tahun_2; $i++ ){
 	$selected = ($i == $tahun) ? 'selected' : '' ;
 	$opt_tahun .= '<option value="'.$i.'" '.$selected.'>'.$i.'</option>';
 }
+
+
 ?>
+
+<!--<input type="text" id="tgl_cutoff" value="<?=$cutoff?>">-->
 <input type="hidden" id="periode_berjalan" value="<?=$tahun.$array_bulan1[$bulan]?>">
+<!--<input type="hidden" id="flag_input" value="<?=$flag_input?>">-->
 <div></div>
 <!--<div class="blink_me">B E T A</div>-->
 <!--<div class="container">-->
@@ -236,7 +245,7 @@ for($i=$tahun_1; $i <= $tahun_2; $i++ ){
 		</div>
 	</div>
 </div>
-<pre><div id="test"></div></pre></pre>
+<!--<pre><div id="test"></div></pre></pre>-->
 <script src="../ckeditor/ckeditor.js"></script>
 <script type="text/javascript">
 	
@@ -250,9 +259,31 @@ $(document).ready(function()
 		var tahun = $("#tahun").val()
 		var bulan = $("#bulan").val()
 		var array = {'Januari':'01','Februari':'02','Maret':'03','April':'04','Mei':'05', 'Juni':'06','Juli':'07','Agustus':'08','September':'09','Oktober':'10','November':'11','Desember':'12'}
+		
 		var periode = tahun+array[bulan];
 		var periode_berjalan = $("#periode_berjalan").val()
-
+		/*
+		var flag_input = $("#flag_input").val()
+		
+		if (flag_input == 'false') {
+			$('#flag-tambah').html('')
+			$('#info').html('');
+		} else {
+			$('#info').html('<div style="font-size:10px;" class="text-info">Tekan tombol <font class="label label-success">Tambah</font> untuk menginput data lembur</div>' + 
+							'<div style="font-size:10px;" class="text-info"> Setelah melakukan penambahan data, silahkan menekan tombol <font class="label label-primary">Ajukan</font> untuk menaikkan status Menunggu Persetujuan Kepala Unit </div>')
+			$('#flag-tambah').html('<button type="button" class="btn btn-success" data-toggle="modal" data-target="#inputModal" id="tambah">Tambah</button>'+
+									'<button class="btn btn-primary" id="ajukan">Ajukan</button>'
+									)
+		}
+		*/
+		/*
+		$('#info').html('<div style="font-size:10px;" class="text-info">Tekan tombol <font class="label label-success">Tambah</font> untuk menginput data lembur</div>' + 
+							'<div style="font-size:10px;" class="text-info"> Setelah melakukan penambahan data, silahkan menekan tombol <font class="label label-primary">Ajukan</font> untuk menaikkan status Menunggu Persetujuan Kepala Unit </div>')
+			$('#flag-tambah').html('<button type="button" class="btn btn-success" data-toggle="modal" data-target="#inputModal" id="tambah">Tambah</button>'+
+									'<button class="btn btn-primary" id="ajukan">Ajukan</button>'
+									)
+		*/
+		
 		if (periode<periode_berjalan) {
 			$('#flag-tambah').html('')
 			$('#info').html('');
@@ -263,6 +294,7 @@ $(document).ready(function()
 									'<button class="btn btn-primary" id="ajukan">Ajukan</button>'
 									)
 		}
+		
 
     	$.ajax({
         	type: 'POST',
@@ -537,8 +569,9 @@ $(document).ready(function()
 	});
 	
 	$(document).on("change", "#tahun, #bulan", function(e){
-		clock.start();
-		fetch_data();
+		clock.start()
+		fetch_data()
+		//compareDate()
 	});
 
 	$(document).on("click", "#ajukan", function(){
@@ -565,6 +598,25 @@ $(document).ready(function()
 	        }    
 	    })
 	})
+	
+	function compareDate()
+	{
+		months = ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12"];
+		
+		var tgl_cutoff = "<?=$cutoff?>"
+		var cutoff = parseInt(tgl_cutoff.replace(/-/g,""))
+		
+		var d = new Date();
+		//var today = parseInt( d.getFullYear() + months[d.getMonth()] + d.getDate() )
+		today = 20190907
+		alert('cutoff:'+cutoff+' today:'+today)
+		
+		if (cutoff>=today){
+			alert("boleh input")
+		} else {
+			alert("gak boleh input")
+		}
+	}
 })
 </script>
 
