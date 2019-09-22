@@ -201,10 +201,73 @@ else if ($crud == 6){
 	$tahun = $_POST['tahun'];
 	$bulan = $_POST['bulan'];
 	$flag_closing = ($_POST['flag_closing'] == 'true') ? 1 : 0 ;
-	echo $sql = "UPDATE lembur_periode SET flag_closing = $flag_closing WHERE tahun = $tahun AND bulan = '$bulan'";
+	$sql = "UPDATE lembur_periode SET flag_closing = $flag_closing WHERE tahun = $tahun AND bulan = '$bulan'";
 	$pdo->query($sql);
 	$pdo->execute();
+	
+	#jika user melakukan closing transaksi maka tambah record bulan berikutnya
+	if($flag_closing == 1){
+		#set tahun dan bulan berikutnya
+		#$bulan = '12'; #tes
+		$next_bulan = (int) $bulan + 1;
+		if (strlen($next_bulan) == 1) 
+			$next_bulan = '0'.$next_bulan;
+			
+		#jika jatuh pada bulan desember maka set bulan berikutnya menjadi '01' atau bulan januari dan rubah tahun ke tahun berikutnya
+		if ($next_bulan == 13) {
+			$next_bulan = '01';
+			$next_tahun = $tahun + 1;
+		} else {
+			$next_tahun = $tahun;
+		}
+		
+		#cek dulu data pada bulan berikutnya ada apa nggak
+		$sql = "SELECT id FROM lembur_periode WHERE tahun = $next_tahun AND bulan = '$next_bulan' ";
+		$pdo->query($sql);
+		$result = $pdo->resultset();
+		$row = count($result);
+
+		#echo 'test'; print_r($row);exit();
+		#jika tidak ada datanya maka tambah record baru
+		if (empty($row)){  
+			#set tanggal cut off bulan berikutnya
+			$tgl_cutoff = next_tgl_cutoff($next_tahun, $next_bulan);
+			$periode = $next_tahun.$next_bulan;
+			
+			#eksekusi ke database
+			echo $sql = "INSERT INTO lembur_periode (tahun, bulan, periode, tgl_cutoff, flag_closing)
+			VALUES ($next_tahun, '$next_bulan', '$periode', '$tgl_cutoff', 0)";
+			$pdo->query($sql);
+			$pdo->execute();
+		}
+		
+	}
 }
+else if ($crud == 7){
+	#ambil data flag cut off untuk melock inputan data dari user
+	$tahun = $_POST['tahun'];
+	$bulan = $array_bulan[$_POST['bulan']];
+	$sql = "SELECT flag_cutoff FROM lembur_periode WHERE tahun = $tahun AND bulan = '$bulan'";
+	$pdo->query($sql);
+	$result = $pdo->single();
+	foreach ($result as $k => $v){
+		$flag_cutoff = $v;
+	}
+	echo $flag_cutoff;
+}
+else if ($crud == 8){
+	#ambil data flag closing untuk melock approval
+	$tahun = $_POST['tahun'];
+	$bulan = $array_bulan[$_POST['bulan']];
+	$sql = "SELECT flag_closing FROM lembur_periode WHERE tahun = $tahun AND bulan = '$bulan'";
+	$pdo->query($sql);
+	$result = $pdo->single();
+	foreach ($result as $k => $v){
+		$flag_closing = $v;
+	}
+	echo $flag_closing;
+}
+
 else if ($crud == 20){  //update tanggal cut off
 	$tahun = $_POST['tahun'];
 	$bulan = $_POST['bulan'];

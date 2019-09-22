@@ -41,7 +41,7 @@ if ($_SESSION['user_nip'] == '090613091') {
 
 if ($_SESSION['user_nip'] == '100220310210019891' or $_SESSION['user_nip'] == '090613045' or $_SESSION['user_nip'] == '090613091') {
 	//ambil data pemohon unit
-	$sql = "SELECT  DISTINCT a.nip, a.nama as nama, a.gol_gapok, unit_kerja_real, gol_gapok, d.nama as nama_pejabat, jabatan, c.kodebidang as kode_bidang
+	$sql = "SELECT  DISTINCT a.nip, a.nama as nama, a.gol_gapok, unit_kerja_real, gol_gapok, d.nama as nama_pejabat, jabatan, c.kodebidang as kode_bidang, b.status
 			FROM ijk a
 			LEFT OUTER JOIN lembur_detail b ON a.nip=b.nip
 			LEFT OUTER JOIN cek_unit_kerja c ON unit_kerja = unit_kerja_ijk
@@ -50,7 +50,7 @@ if ($_SESSION['user_nip'] == '100220310210019891' or $_SESSION['user_nip'] == '0
 			ORDER BY c.kodebidang";
 } else {
 	//ambil data pemohon unit kerja
-	$sql = "SELECT  DISTINCT a.nip, a.nama as nama, a.gol_gapok, unit_kerja_real, gol_gapok, d.nama as nama_pejabat, jabatan, c.kodebidang as kode_bidang
+	$sql = "SELECT  DISTINCT a.nip, a.nama as nama, a.gol_gapok, unit_kerja_real, gol_gapok, d.nama as nama_pejabat, jabatan, c.kodebidang as kode_bidang, b.status
 			FROM ijk a
 			LEFT OUTER JOIN lembur_detail b ON a.nip=b.nip
 			LEFT OUTER JOIN cek_unit_kerja c ON unit_kerja = unit_kerja_ijk
@@ -80,7 +80,21 @@ foreach($result as $row){
 }
 
 #ambil data lembur
-$sql ="SELECT id, nip, tgl_lembur, presensi, uraian, waktu_lembur, waktu_lembur_disetujui, 
+if ($_SESSION['user_nip'] == '100220310210019891' or $_SESSION['user_nip'] == '090613045' or $_SESSION['user_nip'] == '090613091') {
+	$sql ="SELECT id, nip, tgl_lembur, presensi, uraian, waktu_lembur, waktu_lembur_disetujui, 
+		status, keterangan, flag_libur, honor_lembur, TIME_TO_SEC(waktu_lembur_disetujui)/60 as jumlah_menit_disetujui,
+		(TIME_TO_SEC(waktu_lembur_disetujui)/3600)*harga_satuan as honor_lembur_disetujui
+		FROM lembur_detail
+		WHERE flag_transaksi = 0 AND TAHUN = '$tahun' AND bulan = '$bulan' AND nip IN (
+			SELECT DISTINCT a.nip as nip
+			FROM ijk a 
+			LEFT JOIN TblPegawai b ON a.nip = b.nip
+			LEFT JOIN cek_unit_kerja c ON unit_kerja = unit_kerja_ijk
+			WHERE SUBSTR(periode, 1, 2) = '$bulan_ijk' AND SUBSTR(periode, 7, 4) = '$tahun_ijk'
+		)
+		ORDER BY tgl_lembur";
+} else {
+	$sql ="SELECT id, nip, tgl_lembur, presensi, uraian, waktu_lembur, waktu_lembur_disetujui, 
 		status, keterangan, flag_libur, honor_lembur, TIME_TO_SEC(waktu_lembur_disetujui)/60 as jumlah_menit_disetujui,
 		(TIME_TO_SEC(waktu_lembur_disetujui)/3600)*harga_satuan as honor_lembur_disetujui
 		FROM lembur_detail
@@ -92,6 +106,8 @@ $sql ="SELECT id, nip, tgl_lembur, presensi, uraian, waktu_lembur, waktu_lembur_
 			WHERE SUBSTR(periode, 1, 2) = '$bulan_ijk' AND SUBSTR(periode, 7, 4) = '$tahun_ijk' AND c.nip = '$nip_pejabat'
 		)
 		ORDER BY tgl_lembur";
+}
+
 $stmt = $pdo->query($sql) ; //or die( $pdo->errorInfo()[2] );
 $result = $pdo->resultset();		
 foreach($result as $row){
@@ -102,25 +118,50 @@ foreach($result as $row){
 #cetak data
 //echo '<pre>';
 header_table();
-#etak isi tabel
+
+#cetak isi tabel
+
+#ambil data flag closing untuk melock approval
+$sql = "SELECT flag_closing FROM lembur_periode WHERE tahun = $tahun AND bulan = '$bulan'";
+$pdo->query($sql);
+$result = $pdo->single();
+foreach ($result as $k => $v){
+	$flag_closing = $v;
+}
+$label_approval = ($flag_closing==1) ? 'Detail': 'Approval';
+
+#detail data
 $total = 0;
 $total_honor_lembur = 0;
 $no = 1;
 foreach ($data_pemohon as $key => $value){
+
+	//keterangan status
+	if ($v['status'] == 0 AND $v['flag_ajukan'] == 0){
+		$ket_status = 'Belum Diajukan';
+	} else if($v['status'] == 0 AND $v['flag_ajukan'] == 1){
+		$ket_status = 'Menunggu Persetujuan Kepala Unit';
+	} else if ($v['status'] == 1){
+		$ket_status = 'Menunggu Persetujuan Manajer SDM';
+	} else if ($v['status'] == 2){
+		$ket_status = 'Disetujui';
+	}
+
 	$total = hitung_lembur($data_lembur[$key]);
 	echo '
 	<tr id="'.$value['id'].'" data-nip="'.$value['nip'].'">
 		<td>'.$no.'</td>
 		<td>'.$value['nip'].'</td>
 		<td>'.$value['nama'].'</td>
-		<!--<td>'.$value['unit_kerja'].'</td>-->
+		<!--<td>'.$value['unit_kerja'].'</td>-->		
 		<td>'.$value['gol_gapok'].'</td>
-		<td>'.$total['total_jam_hari_kerja'].'</td>
-		<td>'.$total['total_jam_hari_kerja_disetujui'].'</td>
-		<td>'.$total['total_jam_hari_libur'].'</td>
-		<td>'.$total['total_jam_hari_libur_disetujui'].'</td>
-		<td>'.number_format($total['total_honor']).'</td>
-		<td class="approval"><i class="btn btn-warning btn-xs">approval</i></td>
+		<!--<td>'.$ket_status.'</td>-->
+		<td class="cell-total">'.$total['total_jam_hari_kerja'].'</td>
+		<td class="cell-total">'.$total['total_jam_hari_kerja_disetujui'].'</td>
+		<td class="cell-total">'.$total['total_jam_hari_libur'].'</td>
+		<td class="cell-total">'.$total['total_jam_hari_libur_disetujui'].'</td>
+		<td style="text-align:right">'.number_format($total['total_honor']).'</td>
+		<td class="approval"><i class="btn btn-warning btn-xs">'.$label_approval.'</i></td>
 	</tr>';
 	$no++;
 	$total_honor_lembur += $total['total_honor'];
@@ -155,6 +196,7 @@ function hitung_lembur($data_lembur){
 		$array_lembur_disetujui = explode(':', $v['waktu_lembur_disetujui']);
 		$menit_lembur_disetujui = $array_lembur_disetujui[0] * 60 + $array_lembur_disetujui[1];
 		
+		
 		if($v['status'] == 0){
 			$status = 'Belum Disetujui';
 			$honor_lembur = 0;
@@ -168,6 +210,10 @@ function hitung_lembur($data_lembur){
 			$edit = '';
 			$waktu_lembur_disetujui = $waktu_lembur_disetujui->format("H:i");
 		}
+		/*
+		if($v['status'] == 1 or $v['status'] == 2){
+			$total_honor += $v['honor_lembur_disetujui'];
+		}*/
 		
 		$test += $menit_lembur;
 		# Hitung Total Jam Lembur
@@ -178,9 +224,9 @@ function hitung_lembur($data_lembur){
 		}
 		
 		# Hitung Total Jam Lembur disetujui
-		if($v['status'] == 1 and $v['flag_libur'] == 1){
+		if(($v['status'] == 1 or $v['status'] == 2) and $v['flag_libur'] == 1){
 			$total_menit_hari_libur_disetujui += $menit_lembur_disetujui;
-		} else if($v['status'] == 1 and $v['flag_libur'] == 0){
+		} else if(($v['status'] == 1 or $v['status'] == 2) and $v['flag_libur'] == 0){
 			$total_menit_hari_kerja_disetujui += $menit_lembur_disetujui;
 		}
 		
@@ -189,9 +235,13 @@ function hitung_lembur($data_lembur){
 	
 	$total_jam_hari_kerja = convertToHoursMins($total_menit_hari_kerja, '%02d : %02d');
 	$total_jam_hari_libur = convertToHoursMins($total_menit_hari_libur, '%02d : %02d');
+	$total_jam_hari_kerja = ($total_jam_hari_kerja == '') ? '-' : $total_jam_hari_kerja;
+	$total_jam_hari_libur = ($total_jam_hari_libur == '') ? '-' : $total_jam_hari_libur;
 	
 	$total_jam_hari_kerja_disetujui = convertToHoursMins($total_menit_hari_kerja_disetujui, '%02d : %02d');
 	$total_jam_hari_libur_disetujui = convertToHoursMins($total_menit_hari_libur_disetujui, '%02d : %02d');
+	$total_jam_hari_kerja_disetujui = ($total_jam_hari_kerja_disetujui == '') ? '-' : $total_jam_hari_kerja_disetujui;
+	$total_jam_hari_libur_disetujui = ($total_jam_hari_libur_disetujui == '') ? '-' : $total_jam_hari_libur_disetujui;
 
 	$data = array(
 		'total_jam_hari_kerja' => $total_jam_hari_kerja,
@@ -237,7 +287,7 @@ function bulan($nama_bulan){
 	return $array_bulan[$nama_bulan];
 }
 
-function header_table(){
+function header_table($label_approval){
 	echo '
 	<table class="table table-bordered" id="pelaksanaan-lembur">
 				<thead>
@@ -247,10 +297,11 @@ function header_table(){
 			 		<th rowspan="2">Nama</th>
 					<!--<th rowspan="2">Unit Kerja</th>-->
 					<th rowspan="2">Gol</th>
+					<!--<th rowspan="2">Status Persetujuan</th>-->
 			 		<th colspan="2">Jam Lembur<br>Hari Kerja</th>
 					<th colspan="2">Jam Lembur<br>Hari Libur</th>
 			 		<th rowspan="2">Honor</th>
-					<th rowspan="2">Approval</th>
+					<th rowspan="2">'.$label_approval.'</th>
 			 	</tr>
 			<tr>
 				<th>Diajukan</th>
@@ -282,3 +333,6 @@ function test_data($data){
 	echo '</pre>';
 }
 ?>
+<style>
+.cell-total {text-align:center;}
+</style>

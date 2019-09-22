@@ -114,14 +114,15 @@ function printTabel($data_lembur, $periode, $periode_berjalan)
 			$waktu_lembur_disetujui = $waktu_lembur_disetujui->format("H:i");
 		}
 		
+		/*		
 		//nonaktifkan fungsi edit
 		if ($periode < $periode_berjalan) {
 			$remove = '-';
 			$class_remove = '';
 			$style_remove = '';
 		}
-		
-		/*//nonaktifkan fungsi edit setelah data lembur diajukan
+		*/
+		/*nonaktifkan fungsi edit setelah data lembur diajukan
 		if($v['flag_ajukan'] == 1){
 			$remove = '-';
 			$class_remove = '';
@@ -158,9 +159,9 @@ function printTabel($data_lembur, $periode, $periode_berjalan)
 		}
 		
 		# Hitung Total Jam Lembur disetujui
-		if($v['status'] == 1 and $v['flag_libur'] == 1){
+		if($v['status'] == 2 and $v['flag_libur'] == 1){
 			$total_menit_hari_libur_disetujui += $menit_lembur;
-		} else if($v['status'] == 1 and $v['flag_libur'] == 0){
+		} else if($v['status'] == 2 and $v['flag_libur'] == 0){
 			$total_menit_hari_kerja_disetujui += $menit_lembur;
 		}
 		
@@ -173,7 +174,7 @@ function printTabel($data_lembur, $periode, $periode_berjalan)
 	$total_jam_hari_kerja_disetujui = convertToHoursMins($total_menit_hari_kerja_disetujui, '%02d jam %02d menit');
 	$total_jam_hari_libur_disetujui = convertToHoursMins($total_menit_hari_libur_disetujui, '%02d jam %02d menit');
 	
-	footer_table($total_jam_hari_kerja, $total_jam_hari_libur, $total_jam_hari_kerja_disetujui, $total_jam_hari_libur_disetujui, $total_honor);
+	footer_table($total_jam_hari_kerja, $total_jam_hari_libur, $total_jam_hari_kerja_disetujui, $total_jam_hari_libur_disetujui, $total_honor, $total_menit_hari_kerja, $total_menit_hari_libur);
 }
 
 function tanggal($tgl) { // fungsi atau method untuk mengubah tanggal ke format indonesia
@@ -230,7 +231,7 @@ function header_table(){
 				<tbody>';
 }
 
-function footer_table($total_jam_hari_kerja, $total_jam_hari_libur, $total_jam_hari_kerja_disetujui, $total_jam_hari_libur_disetujui, $total_honor){
+function footer_table($total_jam_hari_kerja, $total_jam_hari_libur, $total_jam_hari_kerja_disetujui, $total_jam_hari_libur_disetujui, $total_honor, $total_menit_hari_kerja, $total_menit_hari_libur){
 	//kotak isian biar sepadem
 	$string = '&nbsp'; $spasi = '';
 	for($i=0; $i<29; $i++){
@@ -242,6 +243,11 @@ function footer_table($total_jam_hari_kerja, $total_jam_hari_libur, $total_jam_h
 	if($total_jam_hari_libur == ''){
 		$total_jam_hari_libur = $spasi;
 	}
+	$total_jam_hari_kerja_disetujui = ($total_jam_hari_kerja_disetujui == '') ? $spasi : $total_jam_hari_kerja_disetujui;
+	$total_jam_hari_libur_disetujui = ($total_jam_hari_libur_disetujui == '') ? $spasi : $total_jam_hari_libur_disetujui;
+	
+	$warning_kerja = ($total_menit_hari_kerja > 1500) ? '<font class="text-danger">&nbsp;&nbsp;lebih dari 25 jam sayang!..</font>' : '';
+	$warning_libur = ($total_menit_hari_libur > 1500) ? '<font class="text-danger">&nbsp;&nbsp;lebih dari 25 jam sayang!...</font>' : '';
 	
 	echo '
 				</tbody>
@@ -255,8 +261,9 @@ function footer_table($total_jam_hari_kerja, $total_jam_hari_libur, $total_jam_h
 						<td colspan="8" style="border-left:1px solid #fff; border-right:1px solid #fff; border-bottom:1px solid #fff;">
 							<span class="total-label">Total Jam Lembur Hari Kerja </span>
 							<span class="total-value">'.$total_jam_hari_kerja.'</span>
-							<!--<span class="total-label">Disetujui </span>
-							<span class="total-value">'.$total_jam_hari_kerja_disetujui.'</span>-->
+							<span class="total-label">Disetujui </span>
+							<span class="total-value">'.$total_jam_hari_kerja_disetujui.'</span>
+							<span class="warning">'.$warning_kerja.'</span>
 						</td>
 						<td colspan="2" style="border-right:1px solid #fff; border-left:1px solid #fff; border-bottom:1px solid #fff;"></td>
 					</tr>
@@ -264,8 +271,9 @@ function footer_table($total_jam_hari_kerja, $total_jam_hari_libur, $total_jam_h
 						<td colspan="8" style="border-left:1px solid #fff;  border-right:1px solid #fff; border-bottom:1px solid #fff;">
 							<span class="total-label">Total Jam Lembur Hari Libur </span>
 							<span class="total-value">'.$total_jam_hari_libur.'</span>
-							<!--<span class="total-label">Disetujui </span>
-							<span class="total-value">'.$total_jam_hari_libur_disetujui.'</span>-->
+							<span class="total-label">Disetujui </span>
+							<span class="total-value">'.$total_jam_hari_libur_disetujui.'</span>
+							<span class="warning">'.$warning_libur.'</span>
 						</td>
 						<td colspan="2" style="border-right:1px solid #fff; border-left:1px solid #fff; border-bottom:1px solid #fff;"></td>
 					</tr>

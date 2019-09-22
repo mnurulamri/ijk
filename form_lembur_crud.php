@@ -303,7 +303,7 @@ else if($_POST['crud'] == 7)
 	$bulan = $_POST['bulan'];
 	$nip = $_POST['nip'];
 	$tgl_disetujui = date('Y-m-d h:i:s');
-	$sql = "UPDATE lembur_detail SET status = '2', tgl_disetujui_sdm = '$tgl_disetujui' WHERE tahun= $tahun AND bulan = '$bulan' AND nip = '$nip' AND flag_transaksi = 0";
+	$sql = "UPDATE lembur_detail SET status = '2', tgl_disetujui_sdm = '$tgl_disetujui' WHERE tahun= $tahun AND bulan = '$bulan' AND nip = '$nip' AND flag_transaksi = 0 AND status=1 AND flag_ajukan=1";
 	$result = mysql_query($sql) or die(mysql_error());
 
 	/*
@@ -328,7 +328,7 @@ else if($_POST['crud'] == 7)
 	$tahun = $_POST['tahun'];
 	$bulan = $_POST['bulan'];
 	$nip = $_POST['nip'];
-	$sql = "UPDATE lembur_detail SET status = '0', flag_ajukan = '0' WHERE nip = '$nip' AND flag_transaksi = 0";
+	$sql = "UPDATE lembur_detail SET status = '0', flag_ajukan = '0' WHERE nip = '$nip' AND tahun = $tahun  AND bulan = '$bulan' AND flag_transaksi = 0";
 	$result = mysql_query($sql) or die(mysql_error());
 
 	/*
@@ -348,7 +348,7 @@ else if($_POST['crud'] == 7)
 	$result = mysql_query($sql) or die(mysql_error());
 	*/
 } 
- else if($_POST['crud'] == 11)
+else if($_POST['crud'] == 11)
 { //pengajuan oleh user
 	$tahun = mysql_real_escape_string($_POST['tahun']);
 	$bulan = mysql_real_escape_string($_POST['bulan']);
@@ -356,7 +356,12 @@ else if($_POST['crud'] == 7)
 	$sql = "UPDATE lembur_detail SET flag_ajukan = '1' WHERE tahun = $tahun AND bulan = '$bulan' AND nip = '$nip' ";
 	$result = mysql_query($sql) or die(mysql_error());
 	//echo '<pre>';print_r($sql);	echo '</pre>';
-} 
+}
+else if ($crud == 20){  //approval massal
+	$tahun = $_POST['tahun'];
+	$bulan = $_POST['bulan'];
+	echo $sql = "UPDATE lembur_detail SET status = 2 WHERE tahun = $tahun AND bulan = '$bulan' AND flag_ajukan = 1";
+}  
 
 function tanggalToDb($tgl_kegiatan)
 {

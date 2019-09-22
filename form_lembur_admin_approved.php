@@ -2,8 +2,8 @@
 #include('fungsi_set_periode.php'); 
 include "views/form_lembur_periode_set_periode.php";
 ?>
-<!--<div class="blink_me">B E T A</div>-->
-<!--<div class="container">-->
+<!--<div class="blink_me">B E T A</div>
+<div class="container">-->
 	<div class="panel panel-default">
 		<div class="panel-heading">
 			<h3 class="panel-title">PELAKSANAAN LEMBUR</h3>
@@ -11,7 +11,8 @@ include "views/form_lembur_periode_set_periode.php";
 		
 		<div class="panel-body">
 			<div class="row">
-				<form class="row" action="views/form_lembur_download_xlsx.php" method="post">
+				<!--<form class="row" action="views/form_lembur_download_xlsx.php" method="post">-->
+				<form class="row" action="views/test_xlsx.php" method="post">
 					<div class="col-xs-4"></div>
 				    <div class="col-xs-2 form-group text-left">
 				    	<select class="form-control" name="bulan" id="bulan">
@@ -24,24 +25,14 @@ include "views/form_lembur_periode_set_periode.php";
 						</select>
 				    </div>
 				    <div class="btn-group" role="group" aria-label="...">
-				    	<!--<input type="submit" class="btn btn-success" value="Download Excel" />-->
+				    	<input type="submit" class="btn btn-success" value="Download Excel" />
 					</div>
 				    <div class="col-xs-2"></div>
 				</form>
 
 			</div>	
 		</div>
-<?php
-/*
-if ($_SESSION['role_id'] == 1) {
-	echo '
-	<div class="col-sm-offset-9 col-sm-3">
-		<button class="approval-massal btn btn-info">Approval Massal</button>
-	</div>';
-}
-*/
-?>
-
+		
 		<div class="panel-body" style="overflow:auto">
 			<!--<div class="row">
 				<div class="col-xs-3 pull-right">
@@ -71,7 +62,7 @@ if ($_SESSION['role_id'] == 1) {
 				<div id="form-approval"></div>
 			</div>
 			<div class="modal-footer">
-				<span><button type="button" class="btn btn-warning" data-dismiss="modal">Close</button></span>
+				<span><button type="button" class="btn btn-default" data-dismiss="modal">Close</button></span>
 				<span id="aksi"></span>
 			</div>
 		</div>
@@ -99,17 +90,16 @@ $(document).ready(function(){
 		    	if (data==1){
 					$('#aksi').html('');
 		    	} else {
-					$('#aksi').html('<button type="button" class="btn btn-primary" id="approve">Setujui</button>' + 
+					$('#aksi').html('<button type="button" class="btn btn-primary" id="approve">Ajukan</button>' + 
 						'<button type="button" class="btn btn-danger" id="rollback">Tolak</button>');
 		    	}
         	}
     	})
     
-		//refresh data
+    	//refresh data
 		$.ajax({
 	        type: "POST",
-	        //url: "views/jajal.php", 
-	        url: "views/form_lembur_admin_get_data_pemohon.php",
+	        url: "views/form_lembur_admin_get_data_pemohon_approved.php",
 			data:{tahun:tahun, bulan:bulan},
 	        success: function(data) {
 				$("#data-pemohon").html(data)
@@ -129,7 +119,7 @@ $(document).ready(function(){
 		//tampilkan detail lembur untuk pemohon yg dipilih
 		$.ajax({
 	        type: "POST",
-	        url: "views/form_lembur_admin_approval.php",
+	        url: "views/form_lembur_admin_approved_modal.php",
 	        data: {id:id, nip:nip, tahun:tahun, bulan:bulan},
 	        success: function(data) {
 				$("#form-approval").html(data)
@@ -140,7 +130,6 @@ $(document).ready(function(){
 	
 	$(document).on("click", "#approve", function()
 	{
-		
 		clock.start();
 		var r = confirm("Apakah anda yakin memberikan persetujuan pengajuan lembur?");
 		if (r == true) {
@@ -149,23 +138,18 @@ $(document).ready(function(){
 	        }).get()
 
 			//$('#approvalModal').modal('show');
-			var array = {'Januari':'01','Februari':'02','Maret':'03','April':'04','Mei':'05', 'Juni':'06','Juli':'07','Agustus':'08','September':'09','Oktober':'10','November':'11','Desember':'12'}
 			var nip = $("#nip").val()
-			var tahun = $("#tahun").val()
-			var bulan = array[$("#bulan").val()]
-			//alert(nip+' '+tahun+' '+bulan)
 			$.ajax({
 		        type: "POST",
 		        url: "views/form_lembur_crud.php",
-		        data: {id:id, tahun:tahun, bulan:bulan, nip:nip, crud:9},
+		        data: {id:id, crud:9},
 		        success: function(data) {
-		        	alert(data)
 					var nip = $("#nip").val()
 					var tahun = $("#tahun").val()
 					var bulan = $("#bulan").val()
 					$.ajax({
 				        type: "POST",
-				        url: "views/form_lembur_admin_approval_refresh.php",
+				        url: "views/form_lembur_admin_approved_refresh.php",
 				        data: {nip:nip, tahun:tahun, bulan:bulan},
 				        success: function(res) {
 							$("#table-data").html(res)
@@ -179,27 +163,25 @@ $(document).ready(function(){
 	$(document).on("click", "#rollback", function()
 	{
 		clock.start();
-		var r = confirm("Apakah anda yakin membatalkan pengajuan lembur?");
+		var r = confirm("Apakah anda yakin membatalkan persetujuan pengajuan lembur?");
 		if (r == true) {
-			var id = $('.rollback-check:checked').map(function(_, el) {
-	            return $(el).val()
-	        }).get()
-
 			var array = {'Januari':'01','Februari':'02','Maret':'03','April':'04','Mei':'05', 'Juni':'06','Juli':'07','Agustus':'08','September':'09','Oktober':'10','November':'11','Desember':'12'}
 			var nip = $("#nip").val()
 			var tahun = $("#tahun").val()
 			var bulan = array[$("#bulan").val()]
+
 			$.ajax({
 		        type: "POST",
 		        url: "views/form_lembur_crud.php",
-		        data: {id:id, tahun:tahun, bulan:bulan, nip:nip, crud:10},
+		        data: {tahun:tahun, bulan:bulan, nip:nip, crud:10},
 		        success: function(data) {
+		        	alert(data)
 					var nip = $("#nip").val()
 					var tahun = $("#tahun").val()
 					var bulan = $("#bulan").val()
 					$.ajax({
 				        type: "POST",
-				        url: "views/form_lembur_admin_approval_refresh.php",
+				        url: "views/form_lembur_admin_approved_refresh.php",
 				        data: {nip:nip, tahun:tahun, bulan:bulan},
 				        success: function(res) {
 							$("#table-data").html(res)
@@ -219,27 +201,23 @@ $(document).ready(function(){
 
 	$(document).on('click', '.simpan', function()
 	{
-
 		clock.start();
-		var r = confirm("Apakah anda yakin akan memberikan persetujuan!..");
-		if (r == true) {
-			var id = $(this).closest("td").parent().attr("id")
-			var field = $(this).closest("td").attr("class")
-			var value = $(this).closest("td").text()
+		var id = $(this).closest("td").parent().attr("id")
+		var field = $(this).closest("td").attr("class")
+		var value = $(this).closest("td").text()
 
-			$.ajax({  
-				url:"views/form_lembur_crud.php",  
-				method:"POST",  
-				data:{id:id, field:field, value:value, crud:7},  
-				dataType:"text",  
-				success:function(data){  
-					alert(data)
-					getDataPemohon()
-					$(this).closest('td').find('div').remove()
+		$.ajax({  
+			url:"views/form_lembur_crud.php",  
+			method:"POST",  
+			data:{id:id, field:field, value:value, crud:7},  
+			dataType:"text",  
+			success:function(data){  
+				alert(data)
+				getDataPemohon()
+				$(this).closest('td').find('div').remove()
 
-				}  
-			});			
-		}
+			}  
+		});
 	});
 
 	$(document).on('click', '.cancel', function(e){
@@ -261,35 +239,9 @@ $(document).ready(function(){
         $(".approval-check:checkbox").not(this).prop('checked', this.checked);
     })
     
-     $(document).on("click", ".rollback-check-all", function(){
+    $(document).on("click", ".rollback-check-all", function(){
         $(".rollback-check:checkbox").not(this).prop('checked', this.checked);
     })
-
-    //approve massal
-	$(document).on("click", ".approval-massal", function(){
-
-		var txt;
-		var r = confirm("Anda yakin akan memberikan persetujuan massal!..");
-		if (r == true) {
-			var tahun = 2019
-			var bulan = '08'
-			$.ajax({
-	            type: "POST",
-	            url: "views/form_lembur_periode_crud.php",
-	            data: {
-	            	tahun:tahun,
-	            	bulan:bulan,
-					crud:20
-				},            
-	            success: function(data) {
-	                alert(data)
-	            }           
-	        })
-		} else {
-			txt = "Persetujuan massal dibatalkan";
-		}
-
-	})
 })
 </script>
 
@@ -332,11 +284,7 @@ span.total-value{
 	padding: 3px 10px;
 }
 
-.table#pelaksanaan-lembur thead tr th {
-	background-color:#35A9DB !important;
-	color:#fff;
+table#pelaksanaan-lembur thead tr th {
+	background-color:#eee !important;
 }
-
-.table#pelaksanaan-lembur tbody tr:nth-child(even) {
-    background-color: #f2f2f2;
 </style>

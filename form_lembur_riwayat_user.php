@@ -1,39 +1,7 @@
 <?php
 include('session_end.php');
 
-//include "views/form_lembur_periode_set_periode.php";
-
-/* script lama  */
-include_once('assets/css/blink_me.php');
-
-$array_bulan = array('Januari','Februari','Maret','April','Mei', 'Juni','Juli','Agustus','September','Oktober','November','Desember');
-$array_bulan1 = array('Januari'=>'01','Februari'=>'02','Maret'=>'03','April'=>'04','Mei'=>'05', 'Juni'=>'06','Juli'=>'07','Agustus'=>'08','September'=>'09','Oktober'=>'10','November'=>'11','Desember'=>'12');
-$array_bulan2 = array('01'=>'Januari','02'=>'Februari','03'=>'Maret','04'=>'April','05'=>'Mei', '06'=>'Juni','07'=>'Juli','08'=>'Agustus','09'=>'September','10'=>'Oktober','11'=>'November','12'=>'Desember');
-$m = date('n');
-$day = date('d');
-$tahun = date('Y');
-$tahun_1 = date('Y')-1;
-$tahun_2 = date('Y')+1;
-
-if ($day <= 11){
-	$bulan = $array_bulan[ $m-1 ];
-} else {
-	$bulan = $array_bulan[ $m ];
-}
-
-
-$opt_bulan = '';
-foreach($array_bulan as $k => $v){
-	$selected = ($v == $bulan) ? 'selected' : '' ;
-	$opt_bulan .= '<option value="'.$v.'" '.$selected.'>'.$v.'</option>';
-}
-
-$opt_tahun = '';
-for($i=$tahun_1; $i <= $tahun_2; $i++ ){
-	$selected = ($i == $tahun) ? 'selected' : '' ;
-	$opt_tahun .= '<option value="'.$i.'" '.$selected.'>'.$i.'</option>';
-}
-
+include "views/form_lembur_periode_set_periode.php";
 
 ?>
 
@@ -196,7 +164,7 @@ for($i=$tahun_1; $i <= $tahun_2; $i++ ){
 			<div class="modal-body">
 				<form id="input-lembur">
 					<div class="form-group">
-						<label for="tgl_lembur" class="text-primary">Silahkan pilih hari dan waktu lembur berdasarkan tanggal presensi</label>
+						<label for="tgl_lembur" class="text-primary" style="text-align:center"><font class="label label-info">Silahkan pilih tanggal awal dan tanggal akhir untuk melihat data presensi</font></label>
 						<?include 'views/form_lembur_presensi_perperiode_form.php';?>
 					</div>
 					<hr>
@@ -262,40 +230,28 @@ $(document).ready(function()
 		
 		var periode = tahun+array[bulan];
 		var periode_berjalan = $("#periode_berjalan").val()
-		/*
-		var flag_input = $("#flag_input").val()
 		
-		if (flag_input == 'false') {
-			$('#flag-tambah').html('')
-			$('#info').html('');
-		} else {
-			$('#info').html('<div style="font-size:10px;" class="text-info">Tekan tombol <font class="label label-success">Tambah</font> untuk menginput data lembur</div>' + 
-							'<div style="font-size:10px;" class="text-info"> Setelah melakukan penambahan data, silahkan menekan tombol <font class="label label-primary">Ajukan</font> untuk menaikkan status Menunggu Persetujuan Kepala Unit </div>')
-			$('#flag-tambah').html('<button type="button" class="btn btn-success" data-toggle="modal" data-target="#inputModal" id="tambah">Tambah</button>'+
-									'<button class="btn btn-primary" id="ajukan">Ajukan</button>'
-									)
-		}
-		*/
-		/*
-		$('#info').html('<div style="font-size:10px;" class="text-info">Tekan tombol <font class="label label-success">Tambah</font> untuk menginput data lembur</div>' + 
-							'<div style="font-size:10px;" class="text-info"> Setelah melakukan penambahan data, silahkan menekan tombol <font class="label label-primary">Ajukan</font> untuk menaikkan status Menunggu Persetujuan Kepala Unit </div>')
-			$('#flag-tambah').html('<button type="button" class="btn btn-success" data-toggle="modal" data-target="#inputModal" id="tambah">Tambah</button>'+
-									'<button class="btn btn-primary" id="ajukan">Ajukan</button>'
-									)
-		*/
-		
-		if (periode<periode_berjalan) {
-			$('#flag-tambah').html('')
-			$('#info').html('');
-		} else {
-			$('#info').html('<div style="font-size:10px;" class="text-info">Tekan tombol <font class="label label-success">Tambah</font> untuk menginput data lembur</div>' + 
-							'<div style="font-size:10px;" class="text-info"> Setelah melakukan penambahan data, silahkan menekan tombol <font class="label label-primary">Ajukan</font> untuk menaikkan status Menunggu Persetujuan Kepala Unit </div>')
-			$('#flag-tambah').html('<button type="button" class="btn btn-success" data-toggle="modal" data-target="#inputModal" id="tambah">Tambah</button>'+
-									'<button class="btn btn-primary" id="ajukan">Ajukan</button>'
-									)
-		}
-		
-
+		//ambil data flag cutoff
+		$.ajax({
+        	type: 'POST',
+        	url: 'views/form_lembur_periode_crud.php',
+        	data: {tahun:tahun, bulan:bulan, crud:7},
+        	success: function (data) {
+    			//jika flag cutoff = 1 maka nonaktifkan fungsi tambah data
+		    	if (data==1){
+			    	$('#flag-tambah').html('')
+					$('#info').html('');
+		    	} else {
+		    		$('#info').html('<div style="font-size:12px;" class="text-info">Tekan tombol <font class="label label-success">Tambah</font> untuk menginput data lembur</div>' + 
+									'<div style="font-size:12px;" class="text-info"> Setelah melakukan penambahan data, silahkan menekan tombol <font class="label label-primary">Ajukan</font> untuk menaikkan status Menunggu Persetujuan Kepala Unit </div>')
+					$('#flag-tambah').html('<button type="button" class="btn btn-success" data-toggle="modal" data-target="#inputModal" id="tambah">Tambah</button>'+
+											'<button class="btn btn-primary" id="ajukan">Ajukan</button>'
+											)
+		    	}
+        	}
+    	})
+    
+    	//tampilkan data lembur
     	$.ajax({
         	type: 'POST',
         	url: 'views/form_lembur_get_data.php',
@@ -575,28 +531,32 @@ $(document).ready(function()
 	});
 
 	$(document).on("click", "#ajukan", function(){
-		var array = {'Januari':'01','Februari':'02','Maret':'03','April':'04','Mei':'05', 'Juni':'06','Juli':'07','Agustus':'08','September':'09','Oktober':'10','November':'11','Desember':'12'}
-		var tahun = $("#tahun").val()
-		var bulan = array[$("#bulan").val()]
-		var nip = $("#nip").val()
-		console.log(tahun + bulan + nip)
-		$.ajax({
-	        type: "POST",
-	        url: "views/form_lembur_crud.php",
-	        data: {tahun:tahun, bulan:bulan, nip:nip, crud:11},
-	        success: function(data) {
-				var bulan = $("#bulan").val()
-	        	
-				$.ajax({
-			        type: "POST",
-			        url: "views/form_lembur_get_data.php",
-			        data: {nip:nip, tahun:tahun, bulan:bulan},
-			        success: function(res) {
-						$("#table-data").html(res)
-			        }    
-			    })
-	        }    
-	    })
+		var r = confirm("Apakah anda akan mengajukan permohonan lembur?");
+		if (r == true) {
+
+			var array = {'Januari':'01','Februari':'02','Maret':'03','April':'04','Mei':'05', 'Juni':'06','Juli':'07','Agustus':'08','September':'09','Oktober':'10','November':'11','Desember':'12'}
+			var tahun = $("#tahun").val()
+			var bulan = array[$("#bulan").val()]
+			var nip = $("#nip").val()
+			console.log(tahun + bulan + nip)
+			$.ajax({
+		        type: "POST",
+		        url: "views/form_lembur_crud.php",
+		        data: {tahun:tahun, bulan:bulan, nip:nip, crud:11},
+		        success: function(data) {
+					var bulan = $("#bulan").val()
+		        	
+					$.ajax({
+				        type: "POST",
+				        url: "views/form_lembur_get_data.php",
+				        data: {nip:nip, tahun:tahun, bulan:bulan},
+				        success: function(res) {
+							$("#table-data").html(res)
+				        }    
+				    })
+		        }    
+		    })
+		}
 	})
 	
 	function compareDate()
@@ -650,5 +610,19 @@ span.total-value{
 	padding: 0 2px;
 	color: #444;
 	padding: 3px 10px;
+}
+
+.table#pelaksanaan-lembur tr th{
+    background: #35A9DB;
+    color: #fff;
+    font-weight: bold;
+    text-align: center;
+    border-top: 1px solid #35A9DB;
+    border-left: 1px solid #35A9DB;
+    border-right: 1px solid #35A9DB;
+}
+
+.table#pelaksanaan-lembur tr:nth-child(even) {
+    background-color: #f2f2f2;
 }
 </style>

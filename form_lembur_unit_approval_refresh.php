@@ -12,7 +12,7 @@ $bulan = bulan($_POST['bulan']);
 $array_bulan = array('Januari','Februari','Maret','April','Mei', 'Juni','Juli','Agustus','September','Oktober','November','Desember');
 $array_bulan1 = array('Januari'=>'01','Februari'=>'02','Maret'=>'03','April'=>'04','Mei'=>'05', 'Juni'=>'06','Juli'=>'07','Agustus'=>'08','September'=>'09','Oktober'=>'10','November'=>'11','Desember'=>'12');
 $array_bulan2 = array('01'=>'Januari','02'=>'Februari','03'=>'Maret','04'=>'April','05'=>'Mei', '06'=>'Juni','07'=>'Juli','08'=>'Agustus','09'=>'September','10'=>'Oktober','11'=>'November','12'=>'Desember');
-$m = date('n')-1;
+$m = date('n');
 $day = date('d');
 $tahun = date('Y');
 
@@ -87,7 +87,7 @@ function printTabel($data_lembur)
 			$edit = '<i class="fa fa-edit" ></i>';
 			$checkbox = '<input type="checkbox" class="approval-check" value="'.$v['id'].'"/>';
 			$flag = 'true';
-			$rollback = '';
+			$rollback = '<input type="checkbox" class="rollback-check" value="'.$v['id'].'"/>';
 			$waktu_lembur_disetujui = '00:00';
 		} else if ($v['status'] == 1){
 			$status = 'Menunggu Persetujuan Manajer SDM';
@@ -110,13 +110,14 @@ function printTabel($data_lembur)
 		}
 		
 		#jika yg dipilih adalah periode yg lama maka nonaktifkan fungsi approval dan fungsi edit
+		/*
 		if($v['periode'] < periode_berjalan()){ 
 			$remove = '';
 			$edit = '';
 			$checkbox = '';
 			$rollback = '';
 		}
-
+		*/
 		echo '
 		<tr id="'.$v['id'].'">
 			<td width="160px">'.tanggal($v['tgl_lembur']).'</td>
@@ -155,7 +156,7 @@ function printTabel($data_lembur)
 	$total_jam_hari_kerja_disetujui = convertToHoursMins($total_menit_hari_kerja_disetujui, '%02d jam %02d menit');
 	$total_jam_hari_libur_disetujui = convertToHoursMins($total_menit_hari_libur_disetujui, '%02d jam %02d menit');
 	
-	footer_table($total_jam_hari_kerja, $total_jam_hari_libur, $total_jam_hari_kerja_disetujui, $total_jam_hari_libur_disetujui, $total_honor);
+	footer_table($total_jam_hari_kerja, $total_jam_hari_libur, $total_jam_hari_kerja_disetujui, $total_jam_hari_libur_disetujui, $total_honor, $total_menit_hari_kerja, $total_menit_hari_libur);
 }
 
 function tanggal($tgl) { // fungsi atau method untuk mengubah tanggal ke format indonesia
@@ -206,7 +207,7 @@ function header_table(){
 				<tbody>';
 }
 
-function footer_table($total_jam_hari_kerja, $total_jam_hari_libur, $total_jam_hari_kerja_disetujui, $total_jam_hari_libur_disetujui, $total_honor){
+function footer_table($total_jam_hari_kerja, $total_jam_hari_libur, $total_jam_hari_kerja_disetujui, $total_jam_hari_libur_disetujui, $total_honor, $total_menit_hari_kerja, $total_menit_hari_libur){
 	//kotak isian biar sepadem
 	$string = '&nbsp'; $spasi = '';
 	for($i=0; $i<29; $i++){
@@ -218,6 +219,12 @@ function footer_table($total_jam_hari_kerja, $total_jam_hari_libur, $total_jam_h
 	if($total_jam_hari_libur == ''){
 		$total_jam_hari_libur = $spasi;
 	}
+	$total_jam_hari_kerja_disetujui = ($total_jam_hari_kerja_disetujui == '') ? $spasi : $total_jam_hari_kerja_disetujui;
+	$total_jam_hari_libur_disetujui = ($total_jam_hari_libur_disetujui == '') ? $spasi : $total_jam_hari_libur_disetujui;
+	
+	$warning_kerja = ($total_menit_hari_kerja > 1500) ? '<font class="text-danger">&nbsp;&nbsp;lebih dari 25 jam!..</font>' : '';
+	$warning_libur = ($total_menit_hari_libur > 1500) ? '<font class="text-danger">&nbsp;&nbsp;lebih dari 25 jam!...</font>' : '';
+
 	echo '
 				</tbody>
 				<tfoot>
@@ -225,21 +232,23 @@ function footer_table($total_jam_hari_kerja, $total_jam_hari_libur, $total_jam_h
 					<td colspan="11" style="border-left:1px solid #fff; border-right:1px solid #fff; border-bottom:1px solid #fff;"></td>
 					</tr>
 					<tr>
-						<td colspan="8" style="border-left:1px solid #fff; border-bottom:1px solid #fff; border-right:1px solid #fff;">
+						<td colspan="7" style="border-left:1px solid #fff; border-bottom:1px solid #fff; border-right:1px solid #fff;">
 							<span class="total-label">Total Jam Lembur Hari Kerja </span>
 							<span class="total-value">'.$total_jam_hari_kerja.'</span>
-							<!--<span class="total-label">Disetujui </span>
-							<span class="total-value">'.$total_jam_hari_kerja_disetujui.'</span>-->
+							<span class="total-label">Disetujui </span>
+							<span class="total-value">'.$total_jam_hari_kerja_disetujui.'</span>
+							<span class="warning">'.$warning_kerja.'</span>
 						</td>
 						<td rowspan="2" style="border-left:1px solid #fff; border-bottom:1px solid #fff;"></td>
-						<td rowspan="2" style="vertical-align:middle">'.number_format($total_honor).'</td>
+						<td rowspan="2" style="vertical-align:middle; border-top:1px solid gray; ">'.number_format($total_honor).'</td>
 					</tr>
 					<tr>
-						<td colspan="8" style="border-left:1px solid #fff; border-bottom:1px solid #fff;">
+						<td colspan="7" style="border-left:1px solid #fff; border-bottom:1px solid #fff;">
 							<span class="total-label">Total Jam Lembur Hari Libur </span>
 							<span class="total-value">'.$total_jam_hari_libur.'</span>
-							<!--<span class="total-label">Disetujui </span>
-							<span class="total-value">'.$total_jam_hari_libur_disetujui.'</span>-->
+							<span class="total-label">Disetujui </span>
+							<span class="total-value">'.$total_jam_hari_libur_disetujui.'</span>
+							<span class="warning">'.$warning_libur.'</span>
 						</td>
 					</tr>
 				</tfoot>
@@ -249,7 +258,7 @@ function footer_table($total_jam_hari_kerja, $total_jam_hari_libur, $total_jam_h
 
 if ($periode >= $periode_berjalan) {
 	echo '
-	<ul class="col-xs-12 col-md-12 pull-left text-info" style="font-size:10px;" id="info-persetujuan">
+	<ul class="col-xs-12 col-md-12 pull-left text-info" style="font-size:12px;" id="info-persetujuan">
 		<!--<li>Bila status Belum Disetujui maka persetujuan lembur belum dapat dilakukan </li>-->
 		<!--<li>Tekan tombol <input type="checkbox"> (checkbox) pada kolom Disetujui untuk memilih item lembur yang akan disetujui.</li>-->
 		<li>Silahkan tekan tombol <font class="label label-primary">Ajukan</font> untuk menyetujui dan meningkatkan status menjadi "Menunggu Persetujuan Manajer SDM"</li>

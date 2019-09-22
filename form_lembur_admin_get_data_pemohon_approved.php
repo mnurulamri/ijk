@@ -37,7 +37,7 @@ $sql = "SELECT  DISTINCT a.nip, a.nama as nama_staf,unit_kerja, unit_kerja_real,
 		LEFT OUTER JOIN lembur_detail b ON a.nip=b.nip
 		LEFT OUTER JOIN cek_unit_kerja c ON unit_kerja = unit_kerja_ijk
 		LEFT OUTER JOIN pejabat d ON c.kodebidang = d.kodebidang
-		WHERE tahun = $tahun AND bulan = '$bulan' AND SUBSTR(periode, 1, 2) = '$bulan_ijk' AND SUBSTR(periode, 7, 4) = '$tahun_ijk' AND (b.status='1' or b.status='2')
+		WHERE tahun = $tahun AND bulan = '$bulan' AND SUBSTR(periode, 1, 2) = '$bulan_ijk' AND SUBSTR(periode, 7, 4) = '$tahun_ijk' AND b.status='2'
 		ORDER BY unit_kerja_real";
 
 $stmt = $pdo->query($sql) ; //or die( $pdo->errorInfo()[2] );
@@ -47,6 +47,8 @@ $jumlah_kolom = count($nama_kolom);
 foreach($result as $row){
 	$data_pemohon[$row['nip']] = $row;
 }
+
+
 
 #ambil data lembur
 $sql ="SELECT id, nip, tgl_lembur, presensi, uraian, waktu_lembur, waktu_lembur_disetujui, 
@@ -65,21 +67,6 @@ $stmt = $pdo->query($sql) ; //or die( $pdo->errorInfo()[2] );
 $result = $pdo->resultset();		
 foreach($result as $row){
 	$data_lembur[$row['nip']][] = $row;
-}
-
-#ambil data status
-$sql = "SELECT DISTINCT nip, status FROM lembur_detail WHERE tahun = $tahun AND bulan = '$bulan' ";
-$pdo->query($sql) ; //or die( $pdo->errorInfo()[2] );
-$result = $pdo->resultset();
-foreach($result as $row){
-	if($row['status'] == '1'){
-		$ket_status = '<font class="text-danger">Menunggu Persetujuan Manajer SDM</font>' ;
-	} else if ($row['status'] == '2'){
-		$ket_status = '<font class="text-success">Disetujui</font>' ;
-	} else {
-		$ket_status = 'Belum Diajukan' ;
-	} 
-	$array_status[$row['nip']]= $ket_status;
 }
 
 /*include_once("../models/conn.php");
@@ -123,12 +110,11 @@ foreach ($data_pemohon as $key => $value){
 		<td>'.$value['nama_staf'].'</td>
 		<td>'.$value['unit_kerja_real'].'</td>
 		<td>'.$value['gol_gapok'].'</td>
-		<td>'.$total['total_jam_hari_kerja'].'</td>
-		<td>'.$total['total_jam_hari_kerja_disetujui'].'</td>
-		<td>'.$total['total_jam_hari_libur'].'</td>
-		<td>'.$total['total_jam_hari_libur_disetujui'].'</td>
-		<td>'.number_format($total['total_honor']).'</td>
-		<td>'.$array_status[$value['nip']].'</td>
+		<td class="cell-total">'.$total['total_jam_hari_kerja'].'</td>
+		<td class="cell-total">'.$total['total_jam_hari_kerja_disetujui'].'</td>
+		<td class="cell-total">'.$total['total_jam_hari_libur'].'</td>
+		<td class="cell-total">'.$total['total_jam_hari_libur_disetujui'].'</td>
+		<td style="text-align:right">'.number_format($total['total_honor']).'</td>
 		<td class="approval"><i class="btn btn-warning btn-xs">approval</i></td>
 	</tr>';
 	$no++;
@@ -187,9 +173,9 @@ function hitung_lembur($data_lembur){
 		}
 		
 		# Hitung Total Jam Lembur disetujui
-		if($v['status'] == 2 and $v['flag_libur'] == 1){
+		if(($v['status'] == 2) and $v['flag_libur'] == 1){
 			$total_menit_hari_libur_disetujui += $menit_lembur_disetujui;
-		} else if($v['status'] == 2 and $v['flag_libur'] == 0){
+		} else if(($v['status'] == 2) and $v['flag_libur'] == 0){
 			$total_menit_hari_kerja_disetujui += $menit_lembur_disetujui;
 		}
 		
@@ -252,10 +238,6 @@ function bulan($nama_bulan){
 
 function header_table(){
 	echo '
-	<ul style="font-size:12px;" class="text-info">
-		<li>Data yang ditampilkan adalah data lembur yang sudah diajukan oleh kepala unit atau menunggu persetujuan Manajer SDM</li>
-		<li>Silahkan mengakses menu <font class="label label-default">Data Lembur Disetujui</font> untuk melihat permohonan lembur yang sudah disetujui</li>
-	</ul>
 	<table class="table table-bordered" id="pelaksanaan-lembur">
 				<thead>
 			 	<tr>
@@ -267,7 +249,6 @@ function header_table(){
 			 		<th colspan="2">Jam Lembur<br>Hari Kerja</th>
 					<th colspan="2">Jam Lembur<br>Hari Libur</th>
 			 		<th rowspan="2">Honor</th>
-					<th rowspan="2">Keterangan</th>
 					<th rowspan="2">Approval</th>
 			 	</tr>
 			<tr>
@@ -299,4 +280,8 @@ function test_data($data){
 	print_r($data);
 	echo '</pre>';
 }
-?>	
+?>
+	
+<style>
+.cell-total {text-align:center;}
+</style>

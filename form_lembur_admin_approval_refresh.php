@@ -29,7 +29,7 @@ $sql ="SELECT id, tgl_lembur, presensi, uraian, waktu_lembur, waktu_lembur_diset
 		(TIME_TO_SEC(waktu_lembur_disetujui)/3600)*harga_satuan as honor_lembur_disetujui, flag_ajukan,
 		CONCAT(tahun,bulan) as periode
 		FROM lembur_detail
-		WHERE nip = '$nip' AND flag_transaksi = 0 AND tahun = $tahun AND bulan = '$bulan'
+		WHERE nip = '$nip' AND flag_transaksi = 0 AND tahun = $tahun AND bulan = '$bulan' AND (status=1 or status=2) AND flag_ajukan=1
 		ORDER BY tgl_lembur";
 
 $result = mysql_query($sql) or die(mysql_error());
@@ -89,6 +89,7 @@ function printTabel($data_lembur)
 			$waktu_lembur_disetujui = $waktu_lembur_disetujui->format("H:i");
 		}
 
+		/*
 		#jika yg dipilih adalah periode yg lama maka nonaktifkan fungsi approval dan fungsi edit
 		if($v['periode'] < periode_berjalan()){ 
 			$remove = '';
@@ -96,7 +97,8 @@ function printTabel($data_lembur)
 			$checkbox = '';
 			$rollback = '';
 		}
-
+		*/
+		
 		if($v['flag_ajukan'] == 0){
 			$status = 'Belum Diajukan';
 			$remove = '-';
@@ -127,9 +129,9 @@ function printTabel($data_lembur)
 		}
 		
 		# Hitung Total Jam Lembur disetujui
-		if($v['status'] == 1 and $v['flag_libur'] == 1){
+		if($v['status'] == 2 and $v['flag_libur'] == 1){
 			$total_menit_hari_libur_disetujui += $menit_lembur;
-		} else if($v['status'] == 1 and $v['flag_libur'] == 0){
+		} else if($v['status'] == 2 and $v['flag_libur'] == 0){
 			$total_menit_hari_kerja_disetujui += $menit_lembur;
 		}
 		
@@ -194,6 +196,19 @@ function header_table(){
 }
 
 function footer_table($total_jam_hari_kerja, $total_jam_hari_libur, $total_jam_hari_kerja_disetujui, $total_jam_hari_libur_disetujui, $total_honor){
+	//kotak isian biar sepadem
+	$string = '&nbsp'; $spasi = '';
+	for($i=0; $i<29; $i++){
+		$spasi .= $string; 
+	}
+	if($total_jam_hari_kerja == ''){
+		$total_jam_hari_kerja = $spasi;
+	}
+	if($total_jam_hari_libur == ''){
+		$total_jam_hari_libur = $spasi;
+	}
+	$total_jam_hari_kerja_disetujui = ($total_jam_hari_kerja_disetujui == '') ? $spasi : $total_jam_hari_kerja_disetujui;
+	$total_jam_hari_libur_disetujui = ($total_jam_hari_libur_disetujui == '') ? $spasi : $total_jam_hari_libur_disetujui;
 	
 	echo '
 				</tbody>
@@ -205,8 +220,8 @@ function footer_table($total_jam_hari_kerja, $total_jam_hari_libur, $total_jam_h
 						<td colspan="7" style="border-left:1px solid #fff; border-bottom:1px solid #fff; border-right:1px solid #fff;">
 							<span class="total-label">Total Jam Lembur Hari Kerja </span>
 							<span class="total-value">'.$total_jam_hari_kerja.'</span>
-							<!--<span class="total-label">Disetujui </span>
-							<span class="total-value">'.$total_jam_hari_kerja_disetujui.'</span>-->
+							<span class="total-label">Disetujui </span>
+							<span class="total-value">'.$total_jam_hari_kerja_disetujui.'</span>
 						</td>
 						<td rowspan="2" style="border-left:1px solid #fff; border-bottom:1px solid #fff;"></td>
 						<td rowspan="2" style="vertical-align:middle">'.number_format($total_honor).'</td>
@@ -215,8 +230,8 @@ function footer_table($total_jam_hari_kerja, $total_jam_hari_libur, $total_jam_h
 						<td colspan="7" style="border-left:1px solid #fff; border-bottom:1px solid #fff;">
 							<span class="total-label">Total Jam Lembur Hari Libur </span>
 							<span class="total-value">'.$total_jam_hari_libur.'</span>
-							<!--<span class="total-label">Disetujui </span>
-							<span class="total-value">'.$total_jam_hari_libur_disetujui.'</span>-->
+							<span class="total-label">Disetujui </span>
+							<span class="total-value">'.$total_jam_hari_libur_disetujui.'</span>
 						</td>
 					</tr>
 				</tfoot>

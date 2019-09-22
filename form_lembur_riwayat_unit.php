@@ -1,4 +1,5 @@
 <?php
+/*
 include('fungsi_set_periode.php');
 $array_bulan = array('Januari','Februari','Maret','April','Mei', 'Juni','Juli','Agustus','September','Oktober','November','Desember');
 $array_bulan1 = array('Januari'=>'01','Februari'=>'02','Maret'=>'03','April'=>'04','Mei'=>'05', 'Juni'=>'06','Juli'=>'07','Agustus'=>'08','September'=>'09','Oktober'=>'10','November'=>'11','Desember'=>'12');
@@ -14,11 +15,13 @@ if ($day <= 11){
 } else {
 	$bulan = $array_bulan[ $m ];
 }
+*/
+include "views/form_lembur_periode_set_periode.php";
 
 ?>
 <input type="hidden" id="periode_berjalan" value="<?=$tahun.$array_bulan1[$bulan]?>">
-<div class="blink_me">B E T A</div>
-<!--<div class="container">-->
+<!--<div class="blink_me">B E T A</div>
+<div class="container">-->
 	
 	<div class="panel panel-default">
 		<!-- data ketentuan -->
@@ -96,8 +99,8 @@ if ($day <= 11){
 					<button type="button" class="btn btn-warning" data-dismiss="modal">Close</button>
 				</span>
 				<span id="aksi">
-				<!--<button type="button" class="btn btn-primary" id="approve">approve</button>
-				<button type="button" class="btn btn-warning" id="rollback">rollback</button>-->
+					<button type="button" class="btn btn-primary" id="approve" disabled="disabled">Ajukan</button>
+					<button type="button" class="btn btn-danger" id="rollback" disabled="disabled">Tolak</button>
 				</span>
 			</div>
 		</div>
@@ -117,19 +120,8 @@ $(document).ready(function(){
 		var array = {'Januari':'01','Februari':'02','Maret':'03','April':'04','Mei':'05', 'Juni':'06','Juli':'07','Agustus':'08','September':'09','Oktober':'10','November':'11','Desember':'12'}
 		var periode = tahun+array[bulan];
 		var periode_berjalan = $("#periode_berjalan").val()
-		
-		if (periode<periode_berjalan) {
-			$('#info').html('');
-			$('#aksi').html('');
-		} else {
-			$('#info').html('<ul style="font-size:10px;" class="text-info">'+
-								'<li>Data yang muncul adalah data lembur yang sudah diajukan oleh staf</li>' +
-								'<li>Tekan tombol <font class="label label-warning">Approval</font> untuk melihat detail lembur pegawai</li>' + 
-							'</ul>')
-			$('#aksi').html('<button type="button" class="btn btn-primary" id="approve">Ajukan</button>' + 
-				'<button type="button" class="btn btn-danger" id="rollback">Ditolak</button>');
-		}
-		
+    
+		//refresh data
 		$.ajax({
 	        type: "POST",
 	        url: "views/form_lembur_unit_get_data_pemohon.php",
@@ -161,7 +153,28 @@ $(document).ready(function(){
 				//alert(data)
 	        }    
 	    })
-	
+
+		//ambil data flag closing
+		$.ajax({
+        	type: 'POST',
+        	url: 'views/form_lembur_periode_crud.php',
+        	data: {tahun:tahun, bulan:bulan, crud:8},
+        	success: function (data) {
+    			//jika flag closing = 1 maka nonaktifkan fungsi tambah data
+		    	if (data==1){
+			    	$('#info').html('');
+					$('#aksi').html('');
+		    	} else {
+		    		$('#info').html('<ul style="font-size:12px;" class="text-info">'+
+								'<li>Data yang muncul adalah data lembur yang sudah diajukan oleh staf</li>' +
+								'<li>Tekan tombol <font class="label label-warning">Approval</font> untuk melihat detail lembur pegawai</li>' + 
+							'</ul>')
+					$('#aksi').html('<button type="button" class="btn btn-primary" id="approve">Ajukan</button>' + 
+						'<button type="button" class="btn btn-danger" id="rollback">Ditolak</button>');
+		    	}
+        	}
+    	})	    
+        
 		//jika sudah disetujui nonaktifkan fungsi persetujuan
 		$.ajax({
 	        type: "POST",
@@ -170,11 +183,11 @@ $(document).ready(function(){
 	        success: function(data) {
 				if(data==1 || data==2 ){
 					$('#aksi').html('')
-				} else {
+				} /*else {
 					
 					$('#aksi').html('<button type="button" class="btn btn-primary" id="approve">Ajukan</button>' + 
 								'<button type="button" class="btn btn-danger" id="rollback">Ditolak</button>')
-				}
+				} */
 				
 	        }    
 	    })
@@ -221,25 +234,27 @@ $(document).ready(function(){
 		
 		//$('#approvalModal').modal('show');
 		var nip = $("#nip").val()
-		
-		$.ajax({
-	        type: "POST",
-	        url: "views/form_lembur_crud.php",
-	        data: {id:id, crud:5},
-	        success: function(data) {
-				var nip = $("#nip").val()
-				var tahun = $("#tahun").val()
-				var bulan = $("#bulan").val()
-				$.ajax({
-			        type: "POST",
-			        url: "views/form_lembur_unit_approval_refresh.php",
-			        data: {nip:nip, tahun:tahun, bulan:bulan},
-			        success: function(res) {
-						$("#table-data").html(res)
-			        }    
-			    })
-	        }    
-	    })
+		var r = confirm("Apakah anda yakin memberikan persetujuan pengajuan lembur?");
+		if (r == true) {
+			$.ajax({
+		        type: "POST",
+		        url: "views/form_lembur_crud.php",
+		        data: {id:id, crud:5},
+		        success: function(data) {
+					var nip = $("#nip").val()
+					var tahun = $("#tahun").val()
+					var bulan = $("#bulan").val()
+					$.ajax({
+				        type: "POST",
+				        url: "views/form_lembur_unit_approval_refresh.php",
+				        data: {nip:nip, tahun:tahun, bulan:bulan},
+				        success: function(res) {
+							$("#table-data").html(res)
+				        }    
+				    })
+		        }    
+		    })
+		}
 	})
 	
 	/*
@@ -272,7 +287,7 @@ $(document).ready(function(){
 	$(document).on("click", "#rollback", function()
 	{
 		clock.start();
-		var id = $('.rollback:checked').map(function(_, el) {
+		var id = $('.rollback-check:checked').map(function(_, el) {
             return $(el).val()
         }).get()
 
@@ -283,6 +298,7 @@ $(document).ready(function(){
 	        url: "views/form_lembur_crud.php",
 	        data: {id:id, crud:6},
 	        success: function(data) {
+				//refresh data 
 				var nip = $("#nip").val()
 				var tahun = $("#tahun").val()
 				var bulan = $("#bulan").val()
@@ -303,27 +319,45 @@ $(document).ready(function(){
 	{
 		clock.start();
 		$(this).closest('td').find('span').remove()
-		$(this).closest('td').append('<div><span class="cancel btn btn-xs btn-danger glyphicon glyphicon-remove"></span><span class="simpan btn btn-xs btn-success glyphicon glyphicon-ok" ></span></div>')
+		$(this).closest('td').append('<div><span class="loading"></span><span class="cancel btn btn-xs btn-danger glyphicon glyphicon-remove"></span><span class="simpan btn btn-xs btn-success glyphicon glyphicon-ok" ></span></div>')
 	});
 
 	$(document).on('click', '.simpan', function()
 	{
 		clock.start();
-		var id = $(this).closest("td").parent().attr("id")
-		var field = $(this).closest("td").attr("class")
-		var value = $(this).closest("td").text()
-
-		$.ajax({  
-			url:"views/form_lembur_crud.php",  
-			method:"POST",  
-			data:{id:id, field:field, value:value, crud:7},  
-			dataType:"text",  
-			success:function(data){  
-				getDataPemohon()
-				$(this).closest('td').find('div').remove()
-
-			}  
-		});
+		var r = confirm("Apakah anda menyimpan data?");
+		if (r == true) {
+			var id = $(this).closest("td").parent().attr("id")
+			var field = $(this).closest("td").attr("class")
+			var value = $(this).closest("td").text()
+			$(this).siblings().text("loading...")
+			
+			$.ajax({  
+				url:"views/form_lembur_crud.php",  
+				method:"POST",  
+				data:{id:id, field:field, value:value, crud:7},  
+				dataType:"text",  
+				success:function(data){  
+					//getDataPemohon()
+					//$(this).closest('td').find('div').remove()
+					//refresh data 
+					var nip = $("#nip").val()
+					var tahun = $("#tahun").val()
+					var bulan = $("#bulan").val()
+					$.ajax({
+				        type: "POST",
+				        url: "views/form_lembur_unit_approval_refresh.php",
+				        data: {id:id, nip:nip, tahun:tahun, bulan:bulan},
+				        success: function(res) {
+							$("#table-data").html(res)
+				        }    
+				    })
+				}  
+			});
+		} else {
+			$(this).closest('td').find('div').remove()
+		}
+		
 	});
 
 	$(document).on('click', '.cancel', function(e){
@@ -348,6 +382,35 @@ $(document).ready(function(){
      $(document).on("click", ".rollback-check-all", function(){
         $(".rollback-check:checkbox").not(this).prop('checked', this.checked);
     })
+    
+	//jika check disetujui dipilih maka aktifkan tombol ajukan
+	$(document).on("change", ".approval-check, .approval-check-all", function(){
+		
+		var count_check = $('.approval-check:checked').map(function(_, el) {
+           return $(el).val() 
+        }).get()
+        
+        if (count_check.length > 0){
+        	$("#approve").prop("disabled", false)
+		} else {
+			$("#approve").prop("disabled", true)
+		}
+    })
+    
+    //jika check tolak dipilih maka aktifkan tombol Tolak
+	$(document).on("change", ".rollback-check, .rollback-check-all", function(){
+		
+		var count_check = $('.rollback-check:checked').map(function(_, el) {
+           return $(el).val() 
+        }).get()
+        
+        if (count_check.length > 0){
+        	$("#rollback").prop("disabled", false)
+		} else {
+			$("#rollback").prop("disabled", true)
+		}
+    })
+    
 })
 </script>
 
@@ -401,5 +464,9 @@ span.total-value{
 
 table#pelaksanaan-lembur thead tr th {
 	background-color:#eee !important;
+}
+
+.table#pelaksanaan-lembur tr:nth-child(even) {
+    background-color: #fcfcfc;
 }
 </style>
